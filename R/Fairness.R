@@ -229,7 +229,7 @@ conditional_statistical_parity <- function(data, outcome, group, group2, probs, 
       dplyr::summarize_all(function(x) stats::sd(logit(x))) %>%
       dplyr::rename(se = cond_ppr)
 
-    tpr %>%
+    cond_ppr %>%
       dplyr::left_join(cond_ppr_se, by = c(group, group2AboveBelow)) %>%
       dplyr::mutate(
         cond_ppr_lower = expit(logit(cond_ppr) - 1.96 * se),
@@ -342,7 +342,7 @@ predictive_equality <- function(data, outcome, group, probs, cutoff = 0.5,
       dplyr::summarize_all(function(x) stats::sd(logit(x))) %>%
       dplyr::rename(se = fpr)
 
-    tpr %>%
+    fpr %>%
       dplyr::left_join(fpr_se, by = group) %>%
       dplyr::mutate(
         fpr_lower = expit(logit(fpr) - 1.96 * se),
@@ -470,7 +470,7 @@ accuracy_parity <- function(data, outcome, group, probs, cutoff = 0.5,
       dplyr::rename(se = acc)
 
     acc %>%
-      dplyr::left_join(tpr_se, by = group) %>%
+      dplyr::left_join(acc_se, by = group) %>%
       dplyr::mutate(
         acc_lower = expit(logit(acc) - 1.96 * se),
         acc_upper = expit(logit(acc) + 1.96 * se)
@@ -525,7 +525,7 @@ treatment_equality <- function(data, outcome, group, probs, cutoff = 0.5,
       dplyr::summarize_all(function(x) stats::sd(logit(x))) %>%
       dplyr::rename(se = err_ratio)
 
-    acc %>%
+    err_ratio %>%
       dplyr::left_join(err_ratio_se, by = group) %>%
       dplyr::mutate(
         err_ratio_lower = expit(logit(err_ratio) - 1.96 * se),
@@ -581,7 +581,7 @@ balance_positive <- function(data, outcome, group, probs, cutoff = 0.5,
       dplyr::summarize_all(function(x) stats::sd(logit(x))) %>%
       dplyr::rename(se = exp_pos)
 
-    acc %>%
+    exp_pos %>%
       dplyr::left_join(exp_pos_se, by = group) %>%
       dplyr::mutate(
         exp_pos_lower = expit(logit(exp_pos) - 1.96 * se),
@@ -637,7 +637,7 @@ balance_negative <- function(data, outcome, group, probs, cutoff = 0.5,
       dplyr::summarize_all(function(x) stats::sd(logit(x))) %>%
       dplyr::rename(se = exp_neg)
 
-    acc %>%
+    exp_neg %>%
       dplyr::left_join(exp_neg_se, by = group) %>%
       dplyr::mutate(
         exp_neg_lower = expit(logit(exp_neg) - 1.96 * se),

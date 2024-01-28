@@ -79,7 +79,6 @@ get_ppr <- function(data, outcome, group, probs, cutoff = 0.5) {
   return(result)
 }
 
-
 #' Calculate the conditional positive prediction rate
 #' @param data Data frame containing the outcome, predicted outcome, and
 #' two sensitive attributes
@@ -102,7 +101,7 @@ get_cond_ppr <- function(data, outcome, group, group2, probs, cutoff = 0.5, grou
 
   data <- data %>% mutate(group2AboveBelow = ifelse(group2_sym >= group2_cutoff, paste("Above ", group2_cutoff), paste("Below ", group2_cutoff)))
 
-  # Calculate FPR
+  # Calculate CPPR
   result <- data %>%
     dplyr::group_by(!!group_sym, group2AboveBelow) %>%
   dplyr::summarize(ppr = mean(!!probs_sym >= cutoff), .groups = "drop")
@@ -127,7 +126,7 @@ get_ppv <- function(data, outcome, group, probs, cutoff = 0.5) {
   group_sym <- rlang::sym(group)
   probs_sym <- rlang::sym(probs)
 
-  # Calculate TPR
+  # Calculate PPV
   result <- data %>%
     dplyr::filter(!!probs >= cutoff) %>%
     dplyr::group_by(!!group_sym) %>%
@@ -153,11 +152,11 @@ get_npv <- function(data, outcome, group, probs, cutoff = 0.5) {
   group_sym <- rlang::sym(group)
   probs_sym <- rlang::sym(probs)
 
-  # Calculate TPR
+  # Calculate NPV
   result <- data %>%
-    dplyr::filter(!!probs <= cutoff) %>%
+    dplyr::filter(!!probs < cutoff) %>%
     dplyr::group_by(!!group_sym) %>%
-    dplyr::summarize(ppv = mean(!!outcome_sym == 0), .groups = "drop")
+    dplyr::summarize(npv = mean(!!outcome_sym == 0), .groups = "drop")
 
   return(result)
 }
@@ -181,10 +180,10 @@ get_acc <- function(data, outcome, group, probs, cutoff = 0.5) {
 
   data <- data %>% mutate(pred = ifelse(probs_sym >= cutoff, 1, 0))
 
-  # Calculate TPR
+  # Calculate Accuracy
   result <- data %>%
     dplyr::group_by(!!group_sym) %>%
-    dplyr::summarize(ppv = mean(!!outcome_sym == pred), .groups = "drop")
+    dplyr::summarize(acc = mean(!!outcome_sym == pred), .groups = "drop")
 
   return(result)
 }
@@ -208,7 +207,7 @@ get_err_ratio <- function(data, outcome, group, probs, cutoff = 0.5) {
 
   data <- data %>% mutate(pred = ifelse(probs_sym >= cutoff, 1, 0))
 
-  # Calculate TPR
+  # Calculate Error Ratio
   result <- data %>%
     dplyr::group_by(!!group_sym) %>%
     dplyr::summarize(error_ratio = sum(!!outcome_sym == 1 & pred == 0)/sum(!!outcome_sym == 0 & pred == 1), .groups = "drop")
@@ -233,7 +232,7 @@ get_exp_pos <- function(data, outcome, group, probs, cutoff = 0.5) {
   group_sym <- rlang::sym(group)
   probs_sym <- rlang::sym(probs)
 
-  # Calculate TPR
+  # Calculate expected positive score
   result <- data %>%
     dplyr::filter(!!outcome_sym == 1)
     dplyr::group_by(!!group_sym) %>%
@@ -259,7 +258,7 @@ get_exp_neg <- function(data, outcome, group, probs, cutoff = 0.5) {
   group_sym <- rlang::sym(group)
   probs_sym <- rlang::sym(probs)
 
-  # Calculate TPR
+  # Calculate expected negative score
   result <- data %>%
     dplyr::filter(!!outcome_sym == 0)
   dplyr::group_by(!!group_sym) %>%
