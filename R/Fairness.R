@@ -286,7 +286,7 @@ predictive_parity <- function(data, outcome, group, probs, cutoff = 0.5,
       dplyr::summarize_all(function(x) stats::sd(logit(x))) %>%
       dplyr::rename(se = ppv)
 
-    tpr %>%
+    ppv %>%
       dplyr::left_join(ppv_se, by = group) %>%
       dplyr::mutate(
         ppv_lower = expit(logit(ppv) - 1.96 * se),
