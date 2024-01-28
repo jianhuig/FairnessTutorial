@@ -169,7 +169,7 @@ statistical_parity <- function(data, outcome, group, probs, cutoff = 0.5,
       dplyr::summarize_all(function(x) stats::sd(logit(x))) %>%
       dplyr::rename(se = ppr)
 
-    tpr %>%
+    ppr %>%
       dplyr::left_join(ppr_se, by = group) %>%
       dplyr::mutate(
         ppr_lower = expit(logit(ppr) - 1.96 * se),
