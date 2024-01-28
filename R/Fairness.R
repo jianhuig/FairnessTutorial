@@ -138,7 +138,7 @@ equalized_odds <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @param cutoff the threshold for the predicted outcome, default is 0.5
 #' @param confint whether to compute 95% confidence interval, default is TRUE
 #' @param bootstraps the number of bootstrap samples, default is 1000
-#' @return a list of equal opportunity and its confidence interval
+#' @return a list of statistical parity and its confidence interval
 #' @importFrom magrittr %>%
 #' @export
 
@@ -196,7 +196,7 @@ statistical_parity <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @param group2_cutoff the threshold for the conditional sensitive attribute.
 #' @param confint whether to compute 95% confidence interval, default is TRUE
 #' @param bootstraps the number of bootstrap samples, default is 1000
-#' @return a list of equal opportunity and its confidence interval
+#' @return a list of conditional statistical parity and its confidence interval
 #' @importFrom magrittr %>%
 #' @export
 
@@ -215,7 +215,8 @@ conditional_statistical_parity <- function(data, outcome, group, group2, probs, 
 
   # Calculate confidence interval
   if (confint) {
-    data <- data %>% mutate(group2AboveBelow = ifelse(group2_sym >= group2_cutoff, paste("Above ", group2_cutoff), paste("Below ", group2_cutoff)))
+    group2_sym <- rlang::sym(group2)
+    data <- data %>% mutate(group2AboveBelow = ifelse(!!group2_sym >= group2_cutoff, paste("Above ", group2_cutoff), paste("Below ", group2_cutoff)))
     cond_ppr_se <- lapply(1:bootstraps, function(j) {
       data_boot <- data[sample(nrow(data), replace = TRUE), ]
       get_cond_ppr(
@@ -255,7 +256,7 @@ conditional_statistical_parity <- function(data, outcome, group, group2, probs, 
 #' @param cutoff the threshold for the predicted outcome, default is 0.5
 #' @param confint whether to compute 95% confidence interval, default is TRUE
 #' @param bootstraps the number of bootstrap samples, default is 1000
-#' @return a list of equal opportunity and its confidence interval
+#' @return a list of predictive parity and its confidence interval
 #' @importFrom magrittr %>%
 #' @export
 
@@ -267,11 +268,12 @@ predictive_parity <- function(data, outcome, group, probs, cutoff = 0.5,
     stop("Outcome must be binary (containing only 0 and 1).")
   }
 
+  message(data)
   ppv <- get_ppv(
     data = data, outcome = outcome, group = group, probs = probs,
     cutoff = cutoff
   )
-
+  message(ppv)
   # Calculate confidence interval
   if (confint) {
     ppv_se <- lapply(1:bootstraps, function(j) {
@@ -311,7 +313,7 @@ predictive_parity <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @param cutoff the threshold for the predicted outcome, default is 0.5
 #' @param confint whether to compute 95% confidence interval, default is TRUE
 #' @param bootstraps the number of bootstrap samples, default is 1000
-#' @return a list of equal opportunity and its confidence interval
+#' @return a list of predictive equality and its confidence interval
 #' @importFrom magrittr %>%
 #' @export
 
@@ -367,7 +369,7 @@ predictive_equality <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @param cutoff the threshold for the predicted outcome, default is 0.5
 #' @param confint whether to compute 95% confidence interval, default is TRUE
 #' @param bootstraps the number of bootstrap samples, default is 1000
-#' @return a list of equalized odds and its confidence interval
+#' @return a list of conditional use accuracy equality and its confidence interval
 #' @importFrom magrittr %>%
 #' @export
 
@@ -438,7 +440,7 @@ conditional_use_accuracy_equality <- function(data, outcome, group, probs, cutof
 #' @param cutoff the threshold for the predicted outcome, default is 0.5
 #' @param confint whether to compute 95% confidence interval, default is TRUE
 #' @param bootstraps the number of bootstrap samples, default is 1000
-#' @return a list of equal opportunity and its confidence interval
+#' @return a list of accuracy parity and its confidence interval
 #' @importFrom magrittr %>%
 #' @export
 
@@ -494,7 +496,7 @@ accuracy_parity <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @param cutoff the threshold for the predicted outcome, default is 0.5
 #' @param confint whether to compute 95% confidence interval, default is TRUE
 #' @param bootstraps the number of bootstrap samples, default is 1000
-#' @return a list of equal opportunity and its confidence interval
+#' @return a list of treatment equality and its confidence interval
 #' @importFrom magrittr %>%
 #' @export
 
@@ -550,7 +552,7 @@ treatment_equality <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @param cutoff the threshold for the predicted outcome, default is 0.5
 #' @param confint whether to compute 95% confidence interval, default is TRUE
 #' @param bootstraps the number of bootstrap samples, default is 1000
-#' @return a list of equal opportunity and its confidence interval
+#' @return a list of balance for positive class and its confidence interval
 #' @importFrom magrittr %>%
 #' @export
 
@@ -606,7 +608,7 @@ balance_positive <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @param cutoff the threshold for the predicted outcome, default is 0.5
 #' @param confint whether to compute 95% confidence interval, default is TRUE
 #' @param bootstraps the number of bootstrap samples, default is 1000
-#' @return a list of equal opportunity and its confidence interval
+#' @return a list of balance for negative class and its confidence interval
 #' @importFrom magrittr %>%
 #' @export
 

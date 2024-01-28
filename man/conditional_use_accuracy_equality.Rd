@@ -31,7 +31,7 @@ sensitive attribute}
 \item{bootstraps}{the number of bootstrap samples, default is 1000}
 }
 \value{
-a list of equalized odds and its confidence interval
+a list of conditional use accuracy equality and its confidence interval
 }
 \description{
 Examine conditional use accuracy equality of a model

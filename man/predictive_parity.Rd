@@ -31,7 +31,7 @@ sensitive attribute}
 \item{bootstraps}{the number of bootstrap samples, default is 1000}
 }
 \value{
-a list of equal opportunity and its confidence interval
+a list of predictive parity and its confidence interval
 }
 \description{
 Examine predictive parity of a model

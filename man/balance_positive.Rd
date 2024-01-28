@@ -31,7 +31,7 @@ sensitive attribute}
 \item{bootstraps}{the number of bootstrap samples, default is 1000}
 }
 \value{
-a list of equal opportunity and its confidence interval
+a list of balance for positive class and its confidence interval
 }
 \description{
 Examine balance for positive class of a model
