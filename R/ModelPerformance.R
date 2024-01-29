@@ -265,7 +265,7 @@ get_exp_neg <- function(data, outcome, group, probs, cutoff = 0.5) {
   result <- data %>%
     dplyr::filter(!!outcome_sym == 0) %>%
     dplyr::group_by(!!group_sym) %>%
-    dplyr::summarize(exp_pos = mean(!!probs_sym), .groups = "drop")
+    dplyr::summarize(exp_neg = mean(!!probs_sym), .groups = "drop")
 
   return(result)
 }
