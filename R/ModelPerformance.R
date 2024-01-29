@@ -205,12 +205,15 @@ get_err_ratio <- function(data, outcome, group, probs, cutoff = 0.5) {
   group_sym <- rlang::sym(group)
   probs_sym <- rlang::sym(probs)
 
-  data <- data %>% mutate(prediction = ifelse(probs_sym >= cutoff, 1, 0))
-
   # Calculate Error Ratio
   result <- data %>%
     dplyr::group_by(!!group_sym) %>%
-    dplyr::summarize(err_ratio = (sum(!!outcome_sym == 1 & prediction == 0) / sum(!!outcome_sym == 0 & prediction == 1)), .groups = "drop")
+    dplyr::summarize(
+      err_ratio =
+        sum(!!outcome_sym == 1 & !!probs_sym < cutoff) /
+          sum(!!outcome_sym == 0 & !!probs_sym >= cutoff),
+      .groups = "drop"
+    )
 
   return(result)
 }
