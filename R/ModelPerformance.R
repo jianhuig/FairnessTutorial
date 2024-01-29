@@ -206,12 +206,12 @@ get_err_ratio <- function(data, outcome, group, probs, cutoff = 0.5) {
   group_sym <- rlang::sym(group)
   probs_sym <- rlang::sym(probs)
 
-  data <- data %>% mutate(pred = ifelse(probs_sym >= cutoff, 1, 0))
+  data <- data %>% mutate(prediction = ifelse(probs_sym >= cutoff, 1, 0))
 
   # Calculate Error Ratio
   result <- data %>%
     dplyr::group_by(!!group_sym) %>%
-    dplyr::summarize(err_ratio = (sum(!!outcome_sym == 1 & pred == 0)/sum(!!outcome_sym == 0 & pred == 1)), .groups = "drop")
+    dplyr::summarize(err_ratio = (sum(!!outcome_sym == 1 & prediction == 0)/sum(!!outcome_sym == 0 & prediction == 1)), .groups = "drop")
 
   return(result)
 }
@@ -235,7 +235,7 @@ get_exp_pos <- function(data, outcome, group, probs, cutoff = 0.5) {
 
   # Calculate expected positive score
   result <- data %>%
-    dplyr::filter(!!outcome_sym == 1)
+    dplyr::filter(!!outcome_sym == 1) %>%
     dplyr::group_by(!!group_sym) %>%
     dplyr::summarize(exp_pos = mean(!!probs_sym), .groups = "drop")
 
@@ -261,7 +261,7 @@ get_exp_neg <- function(data, outcome, group, probs, cutoff = 0.5) {
 
   # Calculate expected negative score
   result <- data %>%
-    dplyr::filter(!!outcome_sym == 0)
+    dplyr::filter(!!outcome_sym == 0) %>%
   dplyr::group_by(!!group_sym) %>%
     dplyr::summarize(exp_pos = mean(!!probs_sym), .groups = "drop")
 

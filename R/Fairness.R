@@ -225,7 +225,6 @@ conditional_statistical_parity <- function(data, outcome, group, group2, probs, 
       )
     }) %>%
       do.call(rbind, .) %>%
-      # Need to get group two too
       dplyr::group_by(!!rlang::sym(group), group2AboveBelow) %>%
       dplyr::summarize_all(function(x) stats::sd(logit(x))) %>%
       dplyr::rename(se = cond_ppr)
@@ -236,7 +235,6 @@ conditional_statistical_parity <- function(data, outcome, group, group2, probs, 
         cond_ppr_lower = expit(logit(cond_ppr) - 1.96 * se),
         cond_ppr_upper = expit(logit(cond_ppr) + 1.96 * se)
       ) %>%
-      # Need to get group two here too
       dplyr::select(!!rlang::sym(group), group2AboveBelow, cond_ppr, cond_ppr_lower, cond_ppr_upper) %>%
       dplyr::mutate(
         cond_ppr_ci = paste0("[", round(cond_ppr_lower, 3), ", ", round(cond_ppr_upper, 3), "]")
