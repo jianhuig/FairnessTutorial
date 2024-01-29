@@ -104,7 +104,7 @@ get_cond_ppr <- function(data, outcome, group, group2, probs, cutoff = 0.5, grou
   # Calculate CPPR
   result <- data %>%
     dplyr::group_by(!!group_sym, group2AboveBelow) %>%
-  dplyr::summarize(ppr = mean(!!probs_sym >= cutoff), .groups = "drop")
+    dplyr::summarize(ppr = mean(!!probs_sym >= cutoff), .groups = "drop")
 
   return(result)
 }
@@ -125,13 +125,12 @@ get_ppv <- function(data, outcome, group, probs, cutoff = 0.5) {
   outcome_sym <- rlang::sym(outcome)
   group_sym <- rlang::sym(group)
   probs_sym <- rlang::sym(probs)
-  message("in ppv")
-  message(data)
+
   # Calculate PPV
   result <- data %>%
     dplyr::filter(!!probs_sym >= cutoff) %>%
     dplyr::group_by(!!group_sym) %>%
-    dplyr::summarize(ppv = mean(!!outcome_sym == 1 & !!probs_sym >= cutoff), .groups = "drop")
+    dplyr::summarize(ppv = mean(!!outcome_sym == 1), .groups = "drop")
 
   return(result)
 }
@@ -211,7 +210,7 @@ get_err_ratio <- function(data, outcome, group, probs, cutoff = 0.5) {
   # Calculate Error Ratio
   result <- data %>%
     dplyr::group_by(!!group_sym) %>%
-    dplyr::summarize(err_ratio = (sum(!!outcome_sym == 1 & prediction == 0)/sum(!!outcome_sym == 0 & prediction == 1)), .groups = "drop")
+    dplyr::summarize(err_ratio = (sum(!!outcome_sym == 1 & prediction == 0) / sum(!!outcome_sym == 0 & prediction == 1)), .groups = "drop")
 
   return(result)
 }
@@ -262,7 +261,7 @@ get_exp_neg <- function(data, outcome, group, probs, cutoff = 0.5) {
   # Calculate expected negative score
   result <- data %>%
     dplyr::filter(!!outcome_sym == 0) %>%
-  dplyr::group_by(!!group_sym) %>%
+    dplyr::group_by(!!group_sym) %>%
     dplyr::summarize(exp_pos = mean(!!probs_sym), .groups = "drop")
 
   return(result)
