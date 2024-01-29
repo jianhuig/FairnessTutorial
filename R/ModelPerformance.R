@@ -154,9 +154,9 @@ get_npv <- function(data, outcome, group, probs, cutoff = 0.5) {
 
   # Calculate NPV
   result <- data %>%
-    dplyr::filter(!!probs < cutoff) %>%
+    dplyr::filter(!!probs_sym < cutoff) %>%
     dplyr::group_by(!!group_sym) %>%
-    dplyr::summarize(npv = mean(!!outcome_sym == 0 & !!probs_sym < cutoff), .groups = "drop")
+    dplyr::summarize(npv = mean(!!outcome_sym == 0), .groups = "drop")
 
   return(result)
 }
