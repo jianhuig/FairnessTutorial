@@ -143,7 +143,7 @@ equalized_odds <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @export
 
 statistical_parity <- function(data, outcome, group, probs, cutoff = 0.5,
-                              confint = TRUE, bootstraps = 1000) {
+                               confint = TRUE, bootstraps = 1000) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
@@ -201,7 +201,7 @@ statistical_parity <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @export
 
 conditional_statistical_parity <- function(data, outcome, group, group2, probs, cutoff = 0.5, group2_cutoff,
-                               confint = TRUE, bootstraps = 1000) {
+                                           confint = TRUE, bootstraps = 1000) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
@@ -259,19 +259,18 @@ conditional_statistical_parity <- function(data, outcome, group, group2, probs, 
 #' @export
 
 predictive_parity <- function(data, outcome, group, probs, cutoff = 0.5,
-                               confint = TRUE, bootstraps = 1000) {
+                              confint = TRUE, bootstraps = 1000) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
     stop("Outcome must be binary (containing only 0 and 1).")
   }
 
-  message(data)
   ppv <- get_ppv(
     data = data, outcome = outcome, group = group, probs = probs,
     cutoff = cutoff
   )
-  message(ppv)
+
   # Calculate confidence interval
   if (confint) {
     ppv_se <- lapply(1:bootstraps, function(j) {
@@ -316,7 +315,7 @@ predictive_parity <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @export
 
 predictive_equality <- function(data, outcome, group, probs, cutoff = 0.5,
-                              confint = TRUE, bootstraps = 1000) {
+                                confint = TRUE, bootstraps = 1000) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
@@ -372,7 +371,7 @@ predictive_equality <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @export
 
 conditional_use_accuracy_equality <- function(data, outcome, group, probs, cutoff = 0.5,
-                           confint = TRUE, bootstraps = 1000) {
+                                              confint = TRUE, bootstraps = 1000) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
@@ -443,7 +442,7 @@ conditional_use_accuracy_equality <- function(data, outcome, group, probs, cutof
 #' @export
 
 accuracy_parity <- function(data, outcome, group, probs, cutoff = 0.5,
-                              confint = TRUE, bootstraps = 1000) {
+                            confint = TRUE, bootstraps = 1000) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
@@ -499,7 +498,7 @@ accuracy_parity <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @export
 
 treatment_equality <- function(data, outcome, group, probs, cutoff = 0.5,
-                            confint = TRUE, bootstraps = 1000) {
+                               confint = TRUE, bootstraps = 1000) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
@@ -555,7 +554,7 @@ treatment_equality <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @export
 
 balance_positive <- function(data, outcome, group, probs, cutoff = 0.5,
-                               confint = TRUE, bootstraps = 1000) {
+                             confint = TRUE, bootstraps = 1000) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
