@@ -31,7 +31,7 @@ sensitive attribute}
 \item{bootstraps}{the number of bootstrap samples, default is 1000}
 }
 \value{
-a list of statistical parity and its confidence interval
+a list of positive prediction rate (ppr), the difference, and their confidence interval
 }
 \description{
 Examine statistical parity of a model

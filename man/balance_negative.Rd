@@ -31,7 +31,7 @@ sensitive attribute}
 \item{bootstraps}{the number of bootstrap samples, default is 1000}
 }
 \value{
-a list of balance for negative class and its confidence interval
+a list of expected negative score, the difference, and their confidence interval
 }
 \description{
 Examine balance for negative class of a model

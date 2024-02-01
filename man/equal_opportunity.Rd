@@ -31,7 +31,7 @@ sensitive attribute}
 \item{bootstraps}{the number of bootstrap samples, default is 1000}
 }
 \value{
-a list of equal opportunity and its confidence interval
+a list of true positive rate (tpr), the difference, and their confidence interval
 }
 \description{
 Examine equal opportunity of a model

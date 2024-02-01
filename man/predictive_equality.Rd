@@ -31,7 +31,7 @@ sensitive attribute}
 \item{bootstraps}{the number of bootstrap samples, default is 1000}
 }
 \value{
-a list of predictive equality and its confidence interval
+a list of false positive rate (fpr), the difference, and their confidence interval
 }
 \description{
 Examine predictive equality of a model

@@ -31,7 +31,7 @@ sensitive attribute}
 \item{bootstraps}{the number of bootstrap samples, default is 1000}
 }
 \value{
-a list of conditional use accuracy equality and its confidence interval
+a list of positive predictive value (ppv), negative predictive value (npv), the differences, and their confidence interval
 }
 \description{
 Examine conditional use accuracy equality of a model

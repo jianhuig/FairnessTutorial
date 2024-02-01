@@ -37,7 +37,7 @@ sensitive attributes}
 \item{bootstraps}{the number of bootstrap samples, default is 1000}
 }
 \value{
-a list of conditional statistical parity and its confidence interval
+a list of conditional positive predictive rate (cond_ppr), the difference, and their confidence interval
 }
 \description{
 Examine conditional statistical parity of a model

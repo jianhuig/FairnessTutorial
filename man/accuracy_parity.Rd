@@ -31,7 +31,7 @@ sensitive attribute}
 \item{bootstraps}{the number of bootstrap samples, default is 1000}
 }
 \value{
-a list of accuracy parity and its confidence interval
+a list of model accuracy, the difference, and their confidence interval
 }
 \description{
 Examine accuracy parity of a model

@@ -11,7 +11,7 @@
 #' @param cutoff the threshold for the predicted outcome, default is 0.5
 #' @param confint whether to compute 95% confidence interval, default is TRUE
 #' @param bootstraps the number of bootstrap samples, default is 1000
-#' @return a list of equal opportunity and its confidence interval
+#' @return a list of true positive rate (tpr), the difference, and their confidence interval
 #' @importFrom magrittr %>%
 #' @export
 
@@ -40,19 +40,23 @@ equal_opportunity <- function(data, outcome, group, probs, cutoff = 0.5,
       do.call(rbind, .) %>%
       dplyr::group_by(!!rlang::sym(group)) %>%
       dplyr::summarize_all(function(x) stats::sd(logit(x))) %>%
-      dplyr::rename(se = tpr)
+      dplyr::rename(tpr_se = tpr, diff_se = tpr_diff)
 
-    tpr %>%
+    tpr <- tpr %>%
       dplyr::left_join(tpr_se, by = group) %>%
       dplyr::mutate(
-        tpr_lower = expit(logit(tpr) - 1.96 * se),
-        tpr_upper = expit(logit(tpr) + 1.96 * se)
+        tpr_lower = expit(logit(tpr) - 1.96 * tpr_se),
+        tpr_upper = expit(logit(tpr) + 1.96 * tpr_se),
+        tpr_diff_lower = expit(logit(tpr_diff) - 1.96 * diff_se),
+        tpr_diff_upper = expit(logit(tpr_diff) + 1.96 * diff_se)
       ) %>%
-      dplyr::select(!!rlang::sym(group), tpr, tpr_lower, tpr_upper) %>%
+      dplyr::select(!!rlang::sym(group), tpr, tpr_lower, tpr_upper, tpr_diff, tpr_diff_lower, tpr_diff_upper) %>%
       dplyr::mutate(
-        tpr_ci = paste0("[", round(tpr_lower, 3), ", ", round(tpr_upper, 3), "]")
+        tpr_ci = paste0("[", round(tpr_lower, 3), ", ", round(tpr_upper, 3), "]"),
+        tpr_diff_ci = paste0("[", round(tpr_diff_lower, 3), ", ", round(tpr_diff_upper, 3), "]")
       ) %>%
-      dplyr::select(-tpr_lower, -tpr_upper)
+      dplyr::select(-tpr_lower, -tpr_upper, -tpr_diff_lower, -tpr_diff_upper)
+    tpr[, c(1, 2, 4, 3, 5)]
   } else {
     return(tpr)
   }
@@ -67,7 +71,7 @@ equal_opportunity <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @param cutoff the threshold for the predicted outcome, default is 0.5
 #' @param confint whether to compute 95% confidence interval, default is TRUE
 #' @param bootstraps the number of bootstrap samples, default is 1000
-#' @return a list of equalized odds and its confidence interval
+#' @return a list of true positive rate (tpr), false positive rate (fpr), the differences, and their confidence interval
 #' @importFrom magrittr %>%
 #' @export
 
@@ -105,25 +109,32 @@ equalized_odds <- function(data, outcome, group, probs, cutoff = 0.5,
       do.call(rbind, .) %>%
       dplyr::group_by(!!rlang::sym(group)) %>%
       dplyr::summarize_all(~ stats::sd(logit(.))) %>%
-      dplyr::rename(se_tpr = tpr, se_fpr = fpr)
+      dplyr::rename(tpr_se = tpr, tpr_diff_se = tpr_diff, fpr_se = fpr, fpr_diff_se = fpr_diff)
 
-    cbind(tpr, fpr[-1]) %>%
+    tpr_fpr <- cbind(tpr, fpr[-1]) %>%
       dplyr::inner_join(se, by = group) %>%
       dplyr::mutate(
-        tpr_lower = expit(logit(tpr) - 1.96 * se_tpr),
-        tpr_upper = expit(logit(tpr) + 1.96 * se_tpr),
-        fpr_lower = expit(logit(fpr) - 1.96 * se_fpr),
-        fpr_upper = expit(logit(fpr) + 1.96 * se_fpr)
+        tpr_lower = expit(logit(tpr) - 1.96 * tpr_se),
+        tpr_upper = expit(logit(tpr) + 1.96 * tpr_se),
+        tpr_diff_lower = expit(logit(tpr_diff) - 1.96 * tpr_diff_se),
+        tpr_diff_upper = expit(logit(tpr_diff) + 1.96 * tpr_diff_se),
+        fpr_lower = expit(logit(fpr) - 1.96 * fpr_se),
+        fpr_upper = expit(logit(fpr) + 1.96 * fpr_se),
+        fpr_diff_lower = expit(logit(fpr_diff) - 1.96 * fpr_diff_se),
+        fpr_diff_upper = expit(logit(fpr_diff) + 1.96 * fpr_diff_se)
       ) %>%
       dplyr::select(
-        !!rlang::sym(group), tpr, tpr_lower, tpr_upper,
-        fpr, fpr_lower, fpr_upper
+        !!rlang::sym(group), tpr, tpr_lower, tpr_upper, tpr_diff, tpr_diff_lower, tpr_diff_upper,
+        fpr, fpr_lower, fpr_upper, fpr_diff, fpr_diff_lower, fpr_diff_upper
       ) %>%
       dplyr::mutate(
         tpr_ci = paste0("[", round(tpr_lower, 3), ", ", round(tpr_upper, 3), "]"),
-        fpr_ci = paste0("[", round(fpr_lower, 3), ", ", round(fpr_upper, 3), "]")
+        tpr_diff_ci = paste0("[", round(tpr_diff_lower, 3), ", ", round(tpr_diff_upper, 3), "]"),
+        fpr_ci = paste0("[", round(fpr_lower, 3), ", ", round(fpr_upper, 3), "]"),
+        fpr_diff_ci = paste0("[", round(fpr_diff_lower, 3), ", ", round(fpr_diff_upper, 3), "]")
       ) %>%
-      dplyr::select(-tpr_lower, -tpr_upper, -fpr_lower, -fpr_upper)
+      dplyr::select(-tpr_lower, -tpr_upper, -tpr_diff_lower, -tpr_diff_upper, -fpr_lower, -fpr_upper, -fpr_diff_lower, -fpr_diff_upper)
+      tpr_fpr[, c('gender', 'tpr', 'tpr_ci', 'fpr', 'fpr_ci', 'tpr_diff', 'tpr_diff_ci', 'fpr_diff', 'fpr_diff_ci')]
   } else {
     return(cbind(tpr, fpr[-1]))
   }
@@ -138,12 +149,12 @@ equalized_odds <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @param cutoff the threshold for the predicted outcome, default is 0.5
 #' @param confint whether to compute 95% confidence interval, default is TRUE
 #' @param bootstraps the number of bootstrap samples, default is 1000
-#' @return a list of statistical parity and its confidence interval
+#' @return a list of positive prediction rate (ppr), the difference, and their confidence interval
 #' @importFrom magrittr %>%
 #' @export
 
 statistical_parity <- function(data, outcome, group, probs, cutoff = 0.5,
-                               confint = TRUE, bootstraps = 1000) {
+                              confint = TRUE, bootstraps = 1000) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
@@ -167,19 +178,23 @@ statistical_parity <- function(data, outcome, group, probs, cutoff = 0.5,
       do.call(rbind, .) %>%
       dplyr::group_by(!!rlang::sym(group)) %>%
       dplyr::summarize_all(function(x) stats::sd(logit(x))) %>%
-      dplyr::rename(se = ppr)
+      dplyr::rename(ppr_se = ppr, ppr_diff_se = ppr_diff)
 
-    ppr %>%
+    ppr <- ppr %>%
       dplyr::left_join(ppr_se, by = group) %>%
       dplyr::mutate(
-        ppr_lower = expit(logit(ppr) - 1.96 * se),
-        ppr_upper = expit(logit(ppr) + 1.96 * se)
+        ppr_lower = expit(logit(ppr) - 1.96 * ppr_se),
+        ppr_upper = expit(logit(ppr) + 1.96 * ppr_se),
+        ppr_diff_lower = expit(logit(ppr_diff) - 1.96 * ppr_diff_se),
+        ppr_diff_upper = expit(logit(ppr_diff) + 1.96 * ppr_diff_se),
       ) %>%
-      dplyr::select(!!rlang::sym(group), ppr, ppr_lower, ppr_upper) %>%
+      dplyr::select(!!rlang::sym(group), ppr, ppr_lower, ppr_upper, ppr_diff, ppr_diff_lower, ppr_diff_upper) %>%
       dplyr::mutate(
-        ppr_ci = paste0("[", round(ppr_lower, 3), ", ", round(ppr_upper, 3), "]")
+        ppr_ci = paste0("[", round(ppr_lower, 3), ", ", round(ppr_upper, 3), "]"),
+        ppr_diff_ci = paste0("[", round(ppr_diff_lower, 3), ", ", round(ppr_diff_upper, 3), "]")
       ) %>%
-      dplyr::select(-ppr_lower, -ppr_upper)
+      dplyr::select(-ppr_lower, -ppr_upper, -ppr_diff_lower, -ppr_diff_upper)
+      ppr[, c(1, 2, 4, 3, 5)]
   } else {
     return(ppr)
   }
@@ -196,12 +211,12 @@ statistical_parity <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @param group2_cutoff the threshold for the conditional sensitive attribute.
 #' @param confint whether to compute 95% confidence interval, default is TRUE
 #' @param bootstraps the number of bootstrap samples, default is 1000
-#' @return a list of conditional statistical parity and its confidence interval
+#' @return a list of conditional positive predictive rate (cond_ppr), the difference, and their confidence interval
 #' @importFrom magrittr %>%
 #' @export
 
 conditional_statistical_parity <- function(data, outcome, group, group2, probs, cutoff = 0.5, group2_cutoff,
-                                           confint = TRUE, bootstraps = 1000) {
+                               confint = TRUE, bootstraps = 1000) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
@@ -227,19 +242,23 @@ conditional_statistical_parity <- function(data, outcome, group, group2, probs, 
       do.call(rbind, .) %>%
       dplyr::group_by(!!rlang::sym(group), group2AboveBelow) %>%
       dplyr::summarize_all(function(x) stats::sd(logit(x))) %>%
-      dplyr::rename(se = cond_ppr)
+      dplyr::rename(cond_ppr_se = cond_ppr, cond_ppr_diff_se = cond_ppr_diff)
 
-    cond_ppr %>%
+    cond_ppr <- cond_ppr %>%
       dplyr::left_join(cond_ppr_se, by = c(group, group2AboveBelow)) %>%
       dplyr::mutate(
-        cond_ppr_lower = expit(logit(cond_ppr) - 1.96 * se),
-        cond_ppr_upper = expit(logit(cond_ppr) + 1.96 * se)
+        cond_ppr_lower = expit(logit(cond_ppr) - 1.96 * cond_ppr_se),
+        cond_ppr_upper = expit(logit(cond_ppr) + 1.96 * cond_ppr_se),
+        cond_ppr_diff_lower = expit(logit(cond_ppr_diff) - 1.96 * cond_ppr_diff_se),
+        cond_ppr_diff_lower = expit(logit(cond_ppr_diff) + 1.96 * cond_ppr_diff_se)
       ) %>%
-      dplyr::select(!!rlang::sym(group), group2AboveBelow, cond_ppr, cond_ppr_lower, cond_ppr_upper) %>%
+      dplyr::select(!!rlang::sym(group), group2AboveBelow, cond_ppr, cond_ppr_lower, cond_ppr_upper, cond_ppr_diff, cond_ppr_diff_lower, cond_ppr_diff_upper) %>%
       dplyr::mutate(
-        cond_ppr_ci = paste0("[", round(cond_ppr_lower, 3), ", ", round(cond_ppr_upper, 3), "]")
+        cond_ppr_ci = paste0("[", round(cond_ppr_lower, 3), ", ", round(cond_ppr_upper, 3), "]"),
+        cond_ppr_diff_ci = paste0("[", round(cond_ppr_diff_lower, 3), ", ", round(cond_ppr_diff_upper, 3), "]")
       ) %>%
-      dplyr::select(-cond_ppr_lower, -cond_ppr_upper)
+      dplyr::select(-cond_ppr_lower, -cond_ppr_upper, -cond_ppr_diff_lower, -cond_ppr_diff_upper)
+    cond_ppr[, c(1, 2, 4, 3, 5)]
   } else {
     return(cond_ppr)
   }
@@ -254,12 +273,12 @@ conditional_statistical_parity <- function(data, outcome, group, group2, probs, 
 #' @param cutoff the threshold for the predicted outcome, default is 0.5
 #' @param confint whether to compute 95% confidence interval, default is TRUE
 #' @param bootstraps the number of bootstrap samples, default is 1000
-#' @return a list of predictive parity and its confidence interval
+#' @return a list of positive predictive value (ppv), the difference, and their confidence interval
 #' @importFrom magrittr %>%
 #' @export
 
 predictive_parity <- function(data, outcome, group, probs, cutoff = 0.5,
-                              confint = TRUE, bootstraps = 1000) {
+                               confint = TRUE, bootstraps = 1000) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
@@ -283,19 +302,23 @@ predictive_parity <- function(data, outcome, group, probs, cutoff = 0.5,
       do.call(rbind, .) %>%
       dplyr::group_by(!!rlang::sym(group)) %>%
       dplyr::summarize_all(function(x) stats::sd(logit(x))) %>%
-      dplyr::rename(se = ppv)
+      dplyr::rename(ppv_se = ppv, ppv_diff_se = ppv_diff)
 
-    ppv %>%
+    ppv <- ppv %>%
       dplyr::left_join(ppv_se, by = group) %>%
       dplyr::mutate(
-        ppv_lower = expit(logit(ppv) - 1.96 * se),
-        ppv_upper = expit(logit(ppv) + 1.96 * se)
+        ppv_lower = expit(logit(ppv) - 1.96 * ppv_se),
+        ppv_upper = expit(logit(ppv) + 1.96 * ppv_se),
+        ppv_diff_lower = expit(logit(ppv_diff) - 1.96 * ppv_diff_se),
+        ppv_diff_upper = expit(logit(ppv_diff) + 1.96 * ppv_diff_se)
       ) %>%
-      dplyr::select(!!rlang::sym(group), ppv, ppv_lower, ppv_upper) %>%
+      dplyr::select(!!rlang::sym(group), ppv, ppv_lower, ppv_upper, ppv_diff, ppv_diff_lower, ppv_diff_upper) %>%
       dplyr::mutate(
-        ppv_ci = paste0("[", round(ppv_lower, 3), ", ", round(ppv_upper, 3), "]")
+        ppv_ci = paste0("[", round(ppv_lower, 3), ", ", round(ppv_upper, 3), "]"),
+        ppv_diff_ci = paste0("[", round(ppv_lower, 3), ", ", round(ppv_upper, 3), "]")
       ) %>%
-      dplyr::select(-ppv_lower, -ppv_upper)
+      dplyr::select(-ppv_lower, -ppv_upper, -ppv_diff_lower, -ppv_diff_upper)
+    ppv[, c(1, 2, 4, 3, 5)]
   } else {
     return(ppv)
   }
@@ -310,12 +333,12 @@ predictive_parity <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @param cutoff the threshold for the predicted outcome, default is 0.5
 #' @param confint whether to compute 95% confidence interval, default is TRUE
 #' @param bootstraps the number of bootstrap samples, default is 1000
-#' @return a list of predictive equality and its confidence interval
+#' @return a list of false positive rate (fpr), the difference, and their confidence interval
 #' @importFrom magrittr %>%
 #' @export
 
 predictive_equality <- function(data, outcome, group, probs, cutoff = 0.5,
-                                confint = TRUE, bootstraps = 1000) {
+                              confint = TRUE, bootstraps = 1000) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
@@ -339,19 +362,23 @@ predictive_equality <- function(data, outcome, group, probs, cutoff = 0.5,
       do.call(rbind, .) %>%
       dplyr::group_by(!!rlang::sym(group)) %>%
       dplyr::summarize_all(function(x) stats::sd(logit(x))) %>%
-      dplyr::rename(se = fpr)
+      dplyr::rename(fpr_se = fpr, fpr_diff_se = fpr_diff)
 
-    fpr %>%
+    fpr <- fpr %>%
       dplyr::left_join(fpr_se, by = group) %>%
       dplyr::mutate(
-        fpr_lower = expit(logit(fpr) - 1.96 * se),
-        fpr_upper = expit(logit(fpr) + 1.96 * se)
+        fpr_lower = expit(logit(fpr) - 1.96 * fpr_se),
+        fpr_upper = expit(logit(fpr) + 1.96 * fpr_se),
+        fpr_diff_lower = expit(logit(fpr_diff) - 1.96 * fpr_diff_se),
+        fpr_diff_upper = expit(logit(fpr_diff) + 1.96 * fpr_diff_se)
       ) %>%
-      dplyr::select(!!rlang::sym(group), fpr, fpr_lower, fpr_upper) %>%
+      dplyr::select(!!rlang::sym(group), fpr, fpr_lower, fpr_upper, fpr_diff, fpr_diff_lower, fpr_diff_upper) %>%
       dplyr::mutate(
-        fpr_ci = paste0("[", round(fpr_lower, 3), ", ", round(fpr_upper, 3), "]")
+        fpr_ci = paste0("[", round(fpr_lower, 3), ", ", round(fpr_upper, 3), "]"),
+        fpr_diff_ci = paste0("[", round(fpr_diff_lower, 3), ", ", round(fpr_diff_upper, 3), "]")
       ) %>%
-      dplyr::select(-fpr_lower, -fpr_upper)
+      dplyr::select(-fpr_lower, -fpr_upper, -fpr_diff_lower, -fpr_diff_upper)
+    fpr[, c(1, 2, 4, 3, 5)]
   } else {
     return(fpr)
   }
@@ -366,12 +393,12 @@ predictive_equality <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @param cutoff the threshold for the predicted outcome, default is 0.5
 #' @param confint whether to compute 95% confidence interval, default is TRUE
 #' @param bootstraps the number of bootstrap samples, default is 1000
-#' @return a list of conditional use accuracy equality and its confidence interval
+#' @return a list of positive predictive value (ppv), negative predictive value (npv), the differences, and their confidence interval
 #' @importFrom magrittr %>%
 #' @export
 
 conditional_use_accuracy_equality <- function(data, outcome, group, probs, cutoff = 0.5,
-                                              confint = TRUE, bootstraps = 1000) {
+                           confint = TRUE, bootstraps = 1000) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
@@ -404,25 +431,31 @@ conditional_use_accuracy_equality <- function(data, outcome, group, probs, cutof
       do.call(rbind, .) %>%
       dplyr::group_by(!!rlang::sym(group)) %>%
       dplyr::summarize_all(~ stats::sd(logit(.))) %>%
-      dplyr::rename(se_ppv = ppv, se_npv = npv)
+      dplyr::rename(ppv_se = ppv, ppv_diff_se = ppv_diff, npv_se = npv, npv_diff_se = npv_diff)
 
     cbind(ppv, npv[-1]) %>%
       dplyr::inner_join(se, by = group) %>%
       dplyr::mutate(
-        ppv_lower = expit(logit(ppv) - 1.96 * se_ppv),
-        ppv_upper = expit(logit(ppv) + 1.96 * se_ppv),
-        npv_lower = expit(logit(npv) - 1.96 * se_npv),
-        npv_upper = expit(logit(npv) + 1.96 * se_npv)
+        ppv_lower = expit(logit(ppv) - 1.96 * ppv_se),
+        ppv_upper = expit(logit(ppv) + 1.96 * ppv_se),
+        ppv_diff_lower = expit(logit(ppv_diff) - 1.96 * ppv_diff_se),
+        ppv_diff_upper = expit(logit(ppv_diff) + 1.96 * ppv_diff_se),
+        npv_lower = expit(logit(npv) - 1.96 * npv_se),
+        npv_upper = expit(logit(npv) + 1.96 * npv_se),
+        npv_diff_lower = expit(logit(npv_diff) - 1.96 * npv_diff_se),
+        npv_diff_upper = expit(logit(npv_diff) + 1.96 * npv_diff_se)
       ) %>%
       dplyr::select(
-        !!rlang::sym(group), ppv, ppv_lower, ppv_upper,
-        npv, npv_lower, npv_upper
+        !!rlang::sym(group), ppv, ppv_lower, ppv_upper, ppv_diff, ppv_diff_lower, ppv_diff_upper,
+        npv, npv_lower, npv_upper, npv_diff_lower, npv_diff_upper
       ) %>%
       dplyr::mutate(
         ppv_ci = paste0("[", round(ppv_lower, 3), ", ", round(ppv_upper, 3), "]"),
-        npv_ci = paste0("[", round(npv_lower, 3), ", ", round(npv_upper, 3), "]")
+        ppv_diff_ci = paste0("[", round(ppv_diff_lower, 3), ", ", round(ppv_diff_upper, 3), "]"),
+        npv_ci = paste0("[", round(npv_lower, 3), ", ", round(npv_upper, 3), "]"),
+        npv_diff_ci = paste0("[", round(npv_diff_lower, 3), ", ", round(npv_diff_upper, 3), "]")
       ) %>%
-      dplyr::select(-ppv_lower, -ppv_upper, -npv_lower, -npv_upper)
+      dplyr::select(-ppv_lower, -ppv_upper, -ppv_diff_lower, -ppv_diff_upper, -npv_lower, -npv_upper, -npv_diff_lower, -npv_diff_upper)
   } else {
     return(cbind(ppv, npv[-1]))
   }
@@ -437,12 +470,12 @@ conditional_use_accuracy_equality <- function(data, outcome, group, probs, cutof
 #' @param cutoff the threshold for the predicted outcome, default is 0.5
 #' @param confint whether to compute 95% confidence interval, default is TRUE
 #' @param bootstraps the number of bootstrap samples, default is 1000
-#' @return a list of accuracy parity and its confidence interval
+#' @return a list of model accuracy, the difference, and their confidence interval
 #' @importFrom magrittr %>%
 #' @export
 
 accuracy_parity <- function(data, outcome, group, probs, cutoff = 0.5,
-                            confint = TRUE, bootstraps = 1000) {
+                              confint = TRUE, bootstraps = 1000) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
@@ -466,21 +499,85 @@ accuracy_parity <- function(data, outcome, group, probs, cutoff = 0.5,
       do.call(rbind, .) %>%
       dplyr::group_by(!!rlang::sym(group)) %>%
       dplyr::summarize_all(function(x) stats::sd(logit(x))) %>%
-      dplyr::rename(se = acc)
+      dplyr::rename(acc_se = acc, acc_diff_se = acc_diff)
 
-    acc %>%
+    acc <- acc %>%
       dplyr::left_join(acc_se, by = group) %>%
       dplyr::mutate(
-        acc_lower = expit(logit(acc) - 1.96 * se),
-        acc_upper = expit(logit(acc) + 1.96 * se)
+        acc_lower = expit(logit(acc) - 1.96 * acc_se),
+        acc_upper = expit(logit(acc) + 1.96 * acc_se),
+        acc_diff_lower = expit(logit(acc_diff) - 1.96 * acc_diff_se),
+        acc_diff_upper = expit(logit(acc_diff) + 1.96 * acc_diff_se)
       ) %>%
-      dplyr::select(!!rlang::sym(group), acc, acc_lower, acc_upper) %>%
+      dplyr::select(!!rlang::sym(group), acc, acc_lower, acc_upper, acc_diff, acc_diff_lower, acc_diff_upper) %>%
       dplyr::mutate(
-        acc_ci = paste0("[", round(acc_lower, 3), ", ", round(acc_upper, 3), "]")
+        acc_ci = paste0("[", round(acc_lower, 3), ", ", round(acc_upper, 3), "]"),
+        acc_diff_ci = paste0("[", round(acc_diff_lower, 3), ", ", round(acc_diff_upper, 3), "]")
       ) %>%
-      dplyr::select(-acc_lower, -acc_upper)
+      dplyr::select(-acc_lower, -acc_upper, -acc_diff_lower, -acc_diff_upper)
+    acc[, c(1, 2, 4, 3, 5)]
   } else {
     return(acc)
+  }
+}
+
+#' Examine Brier Score parity of a model
+#' @param data Data frame containing the outcome, predicted outcome, and
+#' sensitive attribute
+#' @param outcome the name of the outcome variable, it must be binary
+#' @param group the name of the sensitive attribute
+#' @param probs the name of the predicted outcome variable
+#' @param cutoff the threshold for the predicted outcome, default is 0.5
+#' @param confint whether to compute 95% confidence interval, default is TRUE
+#' @param bootstraps the number of bootstrap samples, default is 1000
+#' @return a list of Brier Score, the difference, and their confidence interval
+#' @importFrom magrittr %>%
+#' @export
+
+brier_score_parity <- function(data, outcome, group, probs, cutoff = 0.5,
+                               confint = TRUE, bootstraps = 1000) {
+  # Check if outcome is binary
+  unique_values <- unique(data[[outcome]])
+  if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
+    stop("Outcome must be binary (containing only 0 and 1).")
+  }
+
+  brier_score <- get_brier_score(
+    data = data, outcome = outcome, group = group, probs = probs,
+    cutoff = cutoff
+  )
+
+  # Calculate confidence interval
+  if (confint) {
+    brier_score_se <- lapply(1:bootstraps, function(j) {
+      data_boot <- data[sample(nrow(data), replace = TRUE), ]
+      get_brier_score(
+        data = data_boot, outcome = outcome, group = group,
+        probs = probs, cutoff = cutoff
+      )
+    }) %>%
+      do.call(rbind, .) %>%
+      dplyr::group_by(!!rlang::sym(group)) %>%
+      dplyr::summarize_all(function(x) stats::sd(logit(x))) %>%
+      dplyr::rename(brier_se = brier, diff_se = brier_diff)
+
+    brier_score <- brier_score %>%
+      dplyr::left_join(brier_score_se, by = group) %>%
+      dplyr::mutate(
+        brier_score_lower = brier - 1.96 * brier_se,
+        brier_score_upper = brier + 1.96 * brier_se,
+        brier_diff_lower = brier_diff - 1.96 * diff_se,
+        brier_diff_upper = brier_diff + 1.96 * diff_se
+      ) %>%
+      dplyr::select(!!rlang::sym(group), brier, brier_score_lower, brier_score_upper, brier_diff, brier_diff_lower, brier_diff_upper) %>%
+      dplyr::mutate(
+        brier_score_ci = paste0("[", round(brier_score_lower, 3), ", ", round(brier_score_upper, 3), "]"),
+        brier_diff_ci = paste0("[", round(brier_diff_lower, 3), ", ", round(brier_diff_upper, 3), "]")
+        ) %>%
+      dplyr::select(-brier_score_lower, -brier_score_upper, -brier_diff_lower, -brier_diff_upper)
+    brier_score[, c(1, 2, 4, 3, 5)]
+  } else {
+    return(brier_score)
   }
 }
 
@@ -493,12 +590,12 @@ accuracy_parity <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @param cutoff the threshold for the predicted outcome, default is 0.5
 #' @param confint whether to compute 95% confidence interval, default is TRUE
 #' @param bootstraps the number of bootstrap samples, default is 1000
-#' @return a list of treatment equality and its confidence interval
+#' @return a list of error ratio (FN/FP), the difference, and their confidence interval
 #' @importFrom magrittr %>%
 #' @export
 
 treatment_equality <- function(data, outcome, group, probs, cutoff = 0.5,
-                               confint = TRUE, bootstraps = 1000) {
+                            confint = TRUE, bootstraps = 1000) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
@@ -522,19 +619,23 @@ treatment_equality <- function(data, outcome, group, probs, cutoff = 0.5,
       do.call(rbind, .) %>%
       dplyr::group_by(!!rlang::sym(group)) %>%
       dplyr::summarize_all(function(x) stats::sd(logit(x))) %>%
-      dplyr::rename(se = err_ratio)
+      dplyr::rename(err_ratio_se = err_ratio, err_ratio_diff_se = err_ratio_diff)
 
-    err_ratio %>%
+    err_ratio <- err_ratio %>%
       dplyr::left_join(err_ratio_se, by = group) %>%
       dplyr::mutate(
-        err_ratio_lower = expit(logit(err_ratio) - 1.96 * se),
-        err_ratio_upper = expit(logit(err_ratio) + 1.96 * se)
+        err_ratio_lower = expit(logit(err_ratio) - 1.96 * err_ratio_se),
+        err_ratio_upper = expit(logit(err_ratio) + 1.96 * err_ratio_se),
+        err_ratio_diff_lower = expit(logit(err_ratio_diff) - 1.96 * err_ratio_diff_se),
+        err_ratio_diff_upper = expit(logit(err_ratio_diff) + 1.96 * err_ratio_diff_se)
       ) %>%
-      dplyr::select(!!rlang::sym(group), err_ratio, err_ratio_lower, err_ratio_upper) %>%
+      dplyr::select(!!rlang::sym(group), err_ratio, err_ratio_lower, err_ratio_upper, err_ratio_diff, err_ratio_diff_lower, err_ratio_diff_upper) %>%
       dplyr::mutate(
-        err_ratio_ci = paste0("[", round(err_ratio_lower, 3), ", ", round(err_ratio_upper, 3), "]")
+        err_ratio_ci = paste0("[", round(err_ratio_lower, 3), ", ", round(err_ratio_upper, 3), "]"),
+        err_ratio_diff_ci = paste0("[", round(err_ratio_diff_lower, 3), ", ", round(err_ratio_diff_upper, 3), "]")
       ) %>%
-      dplyr::select(-err_ratio_lower, -err_ratio_upper)
+      dplyr::select(-err_ratio_lower, -err_ratio_upper, -err_ratio_diff_lower, -err_ratio_diff_upper)
+    err_ratio[, c(1, 2, 4, 3, 5)]
   } else {
     return(err_ratio)
   }
@@ -549,26 +650,26 @@ treatment_equality <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @param cutoff the threshold for the predicted outcome, default is 0.5
 #' @param confint whether to compute 95% confidence interval, default is TRUE
 #' @param bootstraps the number of bootstrap samples, default is 1000
-#' @return a list of balance for positive class and its confidence interval
+#' @return a list of expected positive score, the difference, and their confidence interval
 #' @importFrom magrittr %>%
 #' @export
 
 balance_positive <- function(data, outcome, group, probs, cutoff = 0.5,
-                             confint = TRUE, bootstraps = 1000) {
+                               confint = TRUE, bootstraps = 1000) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
     stop("Outcome must be binary (containing only 0 and 1).")
   }
 
-  exp_pos <- get_exp_pos(
+  expected_positive_score <- get_exp_pos(
     data = data, outcome = outcome, group = group, probs = probs,
     cutoff = cutoff
   )
 
   # Calculate confidence interval
   if (confint) {
-    exp_pos_se <- lapply(1:bootstraps, function(j) {
+    expected_positive_score_se <- lapply(1:bootstraps, function(j) {
       data_boot <- data[sample(nrow(data), replace = TRUE), ]
       get_exp_pos(
         data = data_boot, outcome = outcome, group = group,
@@ -578,21 +679,26 @@ balance_positive <- function(data, outcome, group, probs, cutoff = 0.5,
       do.call(rbind, .) %>%
       dplyr::group_by(!!rlang::sym(group)) %>%
       dplyr::summarize_all(function(x) stats::sd(logit(x))) %>%
-      dplyr::rename(se = exp_pos)
+      dplyr::rename(expected_positive_score_se = exp_pos, expected_positive_score_diff_se = expected_positive_diff)
 
-    exp_pos %>%
-      dplyr::left_join(exp_pos_se, by = group) %>%
+    expected_positive_score <- expected_positive_score %>%
+      dplyr::left_join(expected_positive_score_se, by = group) %>%
       dplyr::mutate(
-        exp_pos_lower = expit(logit(exp_pos) - 1.96 * se),
-        exp_pos_upper = expit(logit(exp_pos) + 1.96 * se)
+        expected_positive_score_lower = expit(logit(exp_pos) - 1.96 * expected_positive_score_se),
+        expected_positive_score_upper = expit(logit(exp_pos) + 1.96 * expected_positive_score_se),
+        expected_positive_score_diff_lower = expit(logit(expected_positive_diff) - 1.96 * expected_positive_score_diff_se),
+        expected_positive_score_diff_upper = expit(logit(expected_positive_diff) + 1.96 * expected_positive_score_diff_se)
       ) %>%
-      dplyr::select(!!rlang::sym(group), exp_pos, exp_pos_lower, exp_pos_upper) %>%
+      dplyr::select(!!rlang::sym(group), exp_pos, expected_positive_score_lower, expected_positive_score_upper,
+                    expected_positive_diff, expected_positive_score_diff_lower, expected_positive_score_diff_upper) %>%
       dplyr::mutate(
-        exp_pos_ci = paste0("[", round(exp_pos_lower, 3), ", ", round(exp_pos_upper, 3), "]")
+        expected_positive_score_ci = paste0("[", round(expected_positive_score_lower, 3), ", ", round(expected_positive_score_upper, 3), "]"),
+        expected_positive_score_diff_ci = paste0("[", round(expected_positive_score_diff_lower, 3), ", ", round(expected_positive_score_diff_upper, 3), "]")
       ) %>%
-      dplyr::select(-exp_pos_lower, -exp_pos_upper)
+      dplyr::select(-expected_positive_score_lower, -expected_positive_score_upper, -expected_positive_score_diff_lower, -expected_positive_score_diff_upper)
+    expected_positive_score[, c(1, 2, 4, 3, 5)]
   } else {
-    return(exp_pos)
+    return(expected_positive_score)
   }
 }
 
@@ -605,7 +711,7 @@ balance_positive <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @param cutoff the threshold for the predicted outcome, default is 0.5
 #' @param confint whether to compute 95% confidence interval, default is TRUE
 #' @param bootstraps the number of bootstrap samples, default is 1000
-#' @return a list of balance for negative class and its confidence interval
+#' @return a list of expected negative score, the difference, and their confidence interval
 #' @importFrom magrittr %>%
 #' @export
 
@@ -617,14 +723,14 @@ balance_negative <- function(data, outcome, group, probs, cutoff = 0.5,
     stop("Outcome must be binary (containing only 0 and 1).")
   }
 
-  exp_neg <- get_exp_neg(
+  expected_negative_score <- get_exp_neg(
     data = data, outcome = outcome, group = group, probs = probs,
     cutoff = cutoff
   )
 
   # Calculate confidence interval
   if (confint) {
-    exp_neg_se <- lapply(1:bootstraps, function(j) {
+    expected_negative_score_se <- lapply(1:bootstraps, function(j) {
       data_boot <- data[sample(nrow(data), replace = TRUE), ]
       get_exp_neg(
         data = data_boot, outcome = outcome, group = group,
@@ -634,20 +740,25 @@ balance_negative <- function(data, outcome, group, probs, cutoff = 0.5,
       do.call(rbind, .) %>%
       dplyr::group_by(!!rlang::sym(group)) %>%
       dplyr::summarize_all(function(x) stats::sd(logit(x))) %>%
-      dplyr::rename(se = exp_neg)
+      dplyr::rename(expected_negative_se = exp_neg, expected_negative_diff_se = expeced_negative_diff)
 
-    exp_neg %>%
-      dplyr::left_join(exp_neg_se, by = group) %>%
+    expected_negative_score <- expected_negative_score %>%
+      dplyr::left_join(expected_negative_score_se, by = group) %>%
       dplyr::mutate(
-        exp_neg_lower = expit(logit(exp_neg) - 1.96 * se),
-        exp_neg_upper = expit(logit(exp_neg) + 1.96 * se)
+        expected_negative_score_lower = expit(logit(exp_neg) - 1.96 * expected_negative_se),
+        expected_negative_score_upper = expit(logit(exp_neg) + 1.96 * expected_negative_se),
+        expected_negative_score_diff_lower = expit(logit(expeced_negative_diff) - 1.96 * expected_negative_diff_se),
+        expected_negative_score_diff_upper = expit(logit(expeced_negative_diff) + 1.96 * expected_negative_diff_se)
       ) %>%
-      dplyr::select(!!rlang::sym(group), exp_neg, exp_neg_lower, exp_neg_upper) %>%
+      dplyr::select(!!rlang::sym(group), exp_neg, expected_negative_score_lower, expected_negative_score_upper,
+                    expeced_negative_diff, expected_negative_score_diff_lower, expected_negative_score_diff_upper) %>%
       dplyr::mutate(
-        exp_neg_ci = paste0("[", round(exp_neg_lower, 3), ", ", round(exp_neg_upper, 3), "]")
+        expected_negative_score_ci = paste0("[", round(expected_negative_score_lower, 3), ", ", round(expected_negative_score_upper, 3), "]"),
+        expected_negative_score_diff_ci = paste0("[", round(expected_negative_score_diff_lower, 3), ", ", round(expected_negative_score_diff_upper, 3), "]")
       ) %>%
-      dplyr::select(-exp_neg_lower, -exp_neg_upper)
+      dplyr::select(-expected_negative_score_lower, -expected_negative_score_upper, -expected_negative_score_diff_lower, -expected_negative_score_diff_upper)
+    expected_negative_score[, c(1, 2, 4, 3, 5)]
   } else {
-    return(exp_neg)
+    return(expected_negative_score)
   }
 }

@@ -31,7 +31,7 @@ sensitive attribute}
 \item{bootstraps}{the number of bootstrap samples, default is 1000}
 }
 \value{
-a list of equalized odds and its confidence interval
+a list of true positive rate (tpr), false positive rate (fpr), the differences, and their confidence interval
 }
 \description{
 Examine equalized odds of a model
