@@ -66,7 +66,7 @@ check_equal_opportunity <- function(data, outcome, group, probs, cutoff = 0.5,
 
   if (message) {
     cat(
-      "TPR for Group", unique(data[[group]])[1], "is",
+      "True positive rate (TPR) for Group", unique(data[[group]])[1], "is",
       round(tpr[[1]], digits), "\n"
     )
     cat(
@@ -176,7 +176,7 @@ check_equalized_odds <- function(data, outcome, group, probs, cutoff = 0.5,
 
   if (message) {
     cat(
-      "TPR for Group", unique(data[[group]])[1], "is",
+      "True positive rate (TPR) for Group", unique(data[[group]])[1], "is",
       round(tpr[[1]], digits), "\n"
     )
     cat(
@@ -192,7 +192,7 @@ check_equalized_odds <- function(data, outcome, group, probs, cutoff = 0.5,
       )
     }
     cat(
-      "FPR for Group", unique(data[[group]])[1], "is",
+      "False positive rate (FPR) for Group", unique(data[[group]])[1], "is",
       round(fpr[[1]], digits), "\n"
     )
     cat(
@@ -221,18 +221,26 @@ check_equalized_odds <- function(data, outcome, group, probs, cutoff = 0.5,
 #' Examine statistical parity of a model
 #' @param data Data frame containing the outcome, predicted outcome, and
 #' sensitive attribute
-#' @param outcome the name of the outcome variable, it must be binary
-#' @param group the name of the sensitive attribute
-#' @param probs the name of the predicted outcome variable
-#' @param cutoff the threshold for the predicted outcome, default is 0.5
-#' @param confint whether to compute 95% confidence interval, default is TRUE
-#' @param bootstraps the number of bootstrap samples, default is 1000
-#' @return a list of positive prediction rate (ppr), the difference, and their confidence interval
-#' @importFrom magrittr %>%
+#' @param outcome Name of the outcome variable, it must be binary
+#' @param group Name of the sensitive attribute
+#' @param probs Name of the predicted outcome variable
+#' @param cutoff Threshold for the predicted outcome, default is 0.5
+#' @param confint Whether to compute 95% confidence interval, default is TRUE
+#' @param bootstraps Number of bootstrap samples, default is 1000
+#' @param digits Number of digits to round the results to, default is 2
+#' @param message Whether to print the results, default is TRUE
+#' @return A list containing the following elements:
+#'   - PPR_Group1: Positive Prediction Rate for the first group
+#'   - PPR_Group2: Positive Prediction Rate for the second group
+#'   - PPR_Diff: Difference in Positive Prediction Rate
+#'   If confidence intervals are computed (`confint = TRUE`):
+#'   - PPR_Diff_CI: 95% confidence interval for the difference in Positive
+#'   Prediction Rate
 #' @export
 
-statistical_parity <- function(data, outcome, group, probs, cutoff = 0.5,
-                               confint = TRUE, bootstraps = 1000) {
+check_statistical_parity <- function(data, outcome, group, probs, cutoff = 0.5,
+                               confint = TRUE, bootstraps = 1000, digits = 2,
+                               message = TRUE) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
@@ -244,38 +252,59 @@ statistical_parity <- function(data, outcome, group, probs, cutoff = 0.5,
     cutoff = cutoff
   )
 
+  ppr$PPR_Diff <- ppr[[1]] - ppr[[2]]
+
   # Calculate confidence interval
   if (confint) {
-    ppr_se <- lapply(1:bootstraps, function(j) {
-      data_boot <- data[sample(nrow(data), replace = TRUE), ]
-      get_ppr(
+    se <- lapply(1:bootstraps, function(j) {
+      # bootstrap within each group
+      group1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
+                       replace = TRUE
+      )
+      group2 <- sample(which(data[[group]] == unique(data[[group]])[2]),
+                       replace = TRUE
+      )
+      data_boot <- rbind(data[group1, ], data[group2, ])
+
+      ppr <- get_tpr(
         data = data_boot, outcome = outcome, group = group,
         probs = probs, cutoff = cutoff
       )
-    }) %>%
-      do.call(rbind, .) %>%
-      dplyr::group_by(!!rlang::sym(group)) %>%
-      dplyr::summarize_all(function(x) stats::sd(logit(x))) %>%
-      dplyr::rename(ppr_se = ppr, ppr_diff_se = ppr_diff)
+      ppr[[1]] - ppr[[2]]
+    })
 
-    ppr <- ppr %>%
-      dplyr::left_join(ppr_se, by = group) %>%
-      dplyr::mutate(
-        ppr_lower = expit(logit(ppr) - 1.96 * ppr_se),
-        ppr_upper = expit(logit(ppr) + 1.96 * ppr_se),
-        ppr_diff_lower = expit(logit(ppr_diff) - 1.96 * ppr_diff_se),
-        ppr_diff_upper = expit(logit(ppr_diff) + 1.96 * ppr_diff_se),
-      ) %>%
-      dplyr::select(!!rlang::sym(group), ppr, ppr_lower, ppr_upper, ppr_diff, ppr_diff_lower, ppr_diff_upper) %>%
-      dplyr::mutate(
-        ppr_ci = paste0("[", round(ppr_lower, 3), ", ", round(ppr_upper, 3), "]"),
-        ppr_diff_ci = paste0("[", round(ppr_diff_lower, 3), ", ", round(ppr_diff_upper, 3), "]")
-      ) %>%
-      dplyr::select(-ppr_lower, -ppr_upper, -ppr_diff_lower, -ppr_diff_upper)
-    ppr[, c(1, 2, 4, 3, 5)]
-  } else {
-    return(ppr)
+    ppr$PPR_Diff_CI <- c(
+      ppr$PPR_Diff - 1.96 * sd(unlist(se)),
+      ppr$PPR_Diff + 1.96 * sd(unlist(se))
+    )
   }
+
+  if (message) {
+    cat(
+      "Positive prediction rate (PPR) for Group", unique(data[[group]])[1], "is",
+      round(ppr[[1]], digits), "\n"
+    )
+    cat(
+      "PPR for Group", unique(data[[group]])[2], "is",
+      round(ppr[[2]], digits), "\n"
+    )
+    cat("Difference in PPR is", round(ppr$PPR_Diff, digits), "\n")
+    if (confint) {
+      cat(
+        "95% CI for the difference in TPR is",
+        round(ppr$PPR_Diff_CI[1], digits), "to",
+        round(ppr$PPR_Diff_CI[2], digits), "\n"
+      )
+      if (ppr$PPR_Diff_CI[1] > 0 | ppr$PPR_Diff_CI[2] < 0) {
+        cat("There is evidence that model does not satisfy statistical parity.\n")
+      } else {
+        cat("There is not enough evidence that the model does not satisfy statistical parity.\n")
+      }
+    }
+  }
+
+  return(ppr)
+
 }
 
 #' Examine conditional statistical parity of a model
