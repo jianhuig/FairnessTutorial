@@ -68,40 +68,6 @@ get_ppr <- function(data, outcome, group, probs, cutoff = 0.5) {
   return(ppr)
 }
 
-#' Calculate the conditional positive prediction rate
-#' @param data Data frame containing the outcome, predicted outcome, and
-#' two sensitive attributes
-#' @param outcome the name of the outcome variable, it must be binary
-#' @param group the name of the sensitive attribute
-#' @param group2 the name of the conditional sensitive attribute
-#' @param probs the name of the predicted outcome variable
-#' @param cutoff the threshold for the predicted outcome, default is 0.5
-#' @param group2_cutoff the threshold for the conditional sensitive attribute.
-#' @return a vector of conditional positive prediction rate and the difference
-#' @importFrom magrittr %>%
-#' @noRd
-
-get_cond_ppr <- function(data, outcome, group, group2, probs, cutoff = 0.5, group2_cutoff) {
-  # Convert strings to symbols if necessary
-  outcome_sym <- rlang::sym(outcome)
-  group_sym <- rlang::sym(group)
-  group2_sym <- rlang::sym(group2)
-  probs_sym <- rlang::sym(probs)
-
-  data <- data %>% mutate(group2AboveBelow = ifelse(!!group2_sym >= group2_cutoff, paste("Above ", group2_cutoff), paste("Below ", group2_cutoff)))
-
-  # Calculate CPPR
-  result <- data %>%
-    dplyr::group_by(!!group_sym, group2AboveBelow) %>%
-    dplyr::summarize(
-      cond_ppr = mean(!!probs_sym >= cutoff),
-      .groups = "drop"
-    ) %>%
-    dplyr::mutate(cond_ppr_diff = abs(diff(cond_ppr)))
-
-  return(result)
-}
-
 #' Calculate the positive predictive value
 #' @param data Data frame containing the outcome, predicted outcome, and
 #' sensitive attribute

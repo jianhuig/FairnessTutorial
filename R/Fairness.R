@@ -239,8 +239,8 @@ check_equalized_odds <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @export
 
 check_statistical_parity <- function(data, outcome, group, probs, cutoff = 0.5,
-                               confint = TRUE, bootstraps = 1000, digits = 2,
-                               message = TRUE) {
+                                     confint = TRUE, bootstraps = 1000, digits = 2,
+                                     message = TRUE) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
@@ -259,10 +259,10 @@ check_statistical_parity <- function(data, outcome, group, probs, cutoff = 0.5,
     se <- lapply(1:bootstraps, function(j) {
       # bootstrap within each group
       group1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
-                       replace = TRUE
+        replace = TRUE
       )
       group2 <- sample(which(data[[group]] == unique(data[[group]])[2]),
-                       replace = TRUE
+        replace = TRUE
       )
       data_boot <- rbind(data[group1, ], data[group2, ])
 
@@ -298,76 +298,90 @@ check_statistical_parity <- function(data, outcome, group, probs, cutoff = 0.5,
       if (ppr$PPR_Diff_CI[1] > 0 | ppr$PPR_Diff_CI[2] < 0) {
         cat("There is evidence that model does not satisfy statistical parity.\n")
       } else {
-        cat("There is not enough evidence that the model does not satisfy statistical parity.\n")
+        cat("There is not enough evidence that the model does not satisfy
+            statistical parity.\n")
       }
     }
   }
 
   return(ppr)
-
 }
 
 #' Examine conditional statistical parity of a model
 #' @param data Data frame containing the outcome, predicted outcome, and
-#' sensitive attributes
-#' @param outcome the name of the outcome variable, it must be binary
-#' @param group the name of the sensitive attribute
-#' @param group2 the name of the conditional sensitive attribute
-#' @param probs the name of the predicted outcome variable
-#' @param cutoff the threshold for the predicted outcome, default is 0.5
-#' @param group2_cutoff the threshold for the conditional sensitive attribute.
-#' @param confint whether to compute 95% confidence interval, default is TRUE
-#' @param bootstraps the number of bootstrap samples, default is 1000
-#' @return a list of conditional positive predictive rate (cond_ppr), the difference, and their confidence interval
-#' @importFrom magrittr %>%
+#' sensitive attribute
+#' @param outcome Name of the outcome variable, it must be binary
+#' @param group Name of the sensitive attribute
+#' @param group2 Name of the group to condition on
+#' @param condition If the conditional group is categorical, the condition
+#' supplied must be a character of the levels to condition on. If the conditional
+#' group is continuous, the conditions supplied must be a character containing
+#' the sign of the condition and the value to threshold the continuous variable
+#' (e.g. "<50", ">50", "<=50", ">=50").
+#' @param probs Name of the predicted outcome variable
+#' @param cutoff Threshold for the predicted outcome, default is 0.5
+#' @param confint Whether to compute 95% confidence interval, default is TRUE
+#' @param bootstraps Number of bootstrap samples, default is 1000
+#' @param digits Number of digits to round the results to, default is 2
+#' @param message Whether to print the results, default is TRUE
+#' @return A list containing the following elements:
+#'  - Conditions: The conditions used to calculate the conditional PPR
+#'  - PPR_Group1: Positive Prediction Rate for the first group
+#'  - PPR_Group2: Positive Prediction Rate for the second group
+#'  - PPR_Diff: Difference in Positive Prediction Rate
+#'  If confidence intervals are computed (`confint = TRUE`):
+#'  - PPR_Diff_CI: 95% confidence interval for the difference in Positive
+#'  Prediction Rate
 #' @export
 
-conditional_statistical_parity <- function(data, outcome, group, group2, probs, cutoff = 0.5, group2_cutoff,
-                                           confint = TRUE, bootstraps = 1000) {
+check_cond_statistical_parity <- function(data, outcome, group,
+                                           group2, condition, probs,
+                                           cutoff = 0.5, confint = TRUE,
+                                           bootstraps = 1000, message = TRUE,
+                                           digits = 2) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
     stop("Outcome must be binary (containing only 0 and 1).")
   }
 
-  cond_ppr <- get_cond_ppr(
-    data = data, outcome = outcome, group = group, group2 = group2, probs = probs,
-    cutoff = cutoff, group2_cutoff = group2_cutoff
-  )
-
-  # Calculate confidence interval
-  if (confint) {
-    group2_sym <- rlang::sym(group2)
-    data <- data %>% mutate(group2AboveBelow = ifelse(!!group2_sym >= group2_cutoff, paste("Above ", group2_cutoff), paste("Below ", group2_cutoff)))
-    cond_ppr_se <- lapply(1:bootstraps, function(j) {
-      data_boot <- data[sample(nrow(data), replace = TRUE), ]
-      get_cond_ppr(
-        data = data, outcome = outcome, group = group, group2 = group2, probs = probs,
-        cutoff = cutoff, group2_cutoff = group2_cutoff
+  # check if the group2 is categorical or continuous
+  if (is.numeric(data[[group2]])) {
+    if (!grepl("^[<>=]", condition)) {
+      stop("Condition must be a character containing the sign of the condition
+           and the value to threshold the continuous variable
+           (e.g. '<50', '>50', '<=50', '>=50').")
+    } else {
+      subset_data <- subset(
+        data,
+        eval(parse(text = paste0("data$", group2, condition)))
       )
-    }) %>%
-      do.call(rbind, .) %>%
-      dplyr::group_by(!!rlang::sym(group), group2AboveBelow) %>%
-      dplyr::summarize_all(function(x) stats::sd(logit(x))) %>%
-      dplyr::rename(cond_ppr_se = cond_ppr, cond_ppr_diff_se = cond_ppr_diff)
-
-    cond_ppr <- cond_ppr %>%
-      dplyr::left_join(cond_ppr_se, by = c(group, group2AboveBelow)) %>%
-      dplyr::mutate(
-        cond_ppr_lower = expit(logit(cond_ppr) - 1.96 * cond_ppr_se),
-        cond_ppr_upper = expit(logit(cond_ppr) + 1.96 * cond_ppr_se),
-        cond_ppr_diff_lower = expit(logit(cond_ppr_diff) - 1.96 * cond_ppr_diff_se),
-        cond_ppr_diff_lower = expit(logit(cond_ppr_diff) + 1.96 * cond_ppr_diff_se)
-      ) %>%
-      dplyr::select(!!rlang::sym(group), group2AboveBelow, cond_ppr, cond_ppr_lower, cond_ppr_upper, cond_ppr_diff, cond_ppr_diff_lower, cond_ppr_diff_upper) %>%
-      dplyr::mutate(
-        cond_ppr_ci = paste0("[", round(cond_ppr_lower, 3), ", ", round(cond_ppr_upper, 3), "]"),
-        cond_ppr_diff_ci = paste0("[", round(cond_ppr_diff_lower, 3), ", ", round(cond_ppr_diff_upper, 3), "]")
-      ) %>%
-      dplyr::select(-cond_ppr_lower, -cond_ppr_upper, -cond_ppr_diff_lower, -cond_ppr_diff_upper)
-    cond_ppr[, c(1, 2, 4, 3, 5)]
+      cat("Conditional on", group2, condition, ":\n")
+      return(c(
+        list(condition = paste(group2, condition)),
+        check_statistical_parity(
+          data = subset_data, outcome = outcome, group = group, probs = probs,
+          cutoff = cutoff, confint = confint, bootstraps = bootstraps,
+          digits = digits, message = message
+        )
+      ))
+    }
   } else {
-    return(cond_ppr)
+    data[[group2]] <- as.factor(data[[group2]])
+    if (!condition %in% levels(data[[group2]])) {
+      stop("Condition must be a character of the levels to condition on.")
+    } else {
+      subset_data <- subset(data, data[[group2]] == condition)
+      cat("Conditional on", group2, "=", condition, ":\n")
+      return(c(
+        list(condition = paste(group2, condition)),
+        check_statistical_parity(
+          data = subset_data, outcome = outcome, group = group, probs = probs,
+          cutoff = cutoff, confint = confint, bootstraps = bootstraps,
+          digits = digits, message = message
+        )
+      ))
+    }
   }
 }
 
