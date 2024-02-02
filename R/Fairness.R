@@ -11,7 +11,7 @@
 #' @param cutoff Threshold for the predicted outcome, default is 0.5
 #' @param confint Whether to compute 95% confidence interval, default is TRUE
 #' @param bootstraps Number of bootstrap samples, default is 1000
-#' @param digits Number of digits to round the results to, default is 3
+#' @param digits Number of digits to round the results to, default is 2
 #' @param message Whether to print the results, default is TRUE
 #' @return A list containing the following elements:
 #'   - TPR_Group1: True Positive Rate for the first group
@@ -25,7 +25,7 @@
 
 check_equal_opportunity <- function(data, outcome, group, probs, cutoff = 0.5,
                                     confint = TRUE, bootstraps = 1000,
-                                    digits = 3, message = TRUE) {
+                                    digits = 2, message = TRUE) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
@@ -83,7 +83,8 @@ check_equal_opportunity <- function(data, outcome, group, probs, cutoff = 0.5,
       if (tpr$TPR_Diff_CI[1] > 0 | tpr$TPR_Diff_CI[2] < 0) {
         cat("There is evidence that model does not satisfy equal opportunity.\n")
       } else {
-        cat("There is not enough evidence that the model does not satisfy equal opportunity.\n")
+        cat("There is not enough evidence that the model does not satisfy equal
+            opportunity.\n")
       }
     }
   }
@@ -94,39 +95,33 @@ check_equal_opportunity <- function(data, outcome, group, probs, cutoff = 0.5,
 #' Examine equalized odds of a model
 #' @param data Data frame containing the outcome, predicted outcome, and
 #' sensitive attribute
-#' @param outcome the name of the outcome variable, it must be binary
-#' @param group the name of the sensitive attribute
-#' @param probs the name of the predicted outcome variable
-#' @param cutoff the threshold for the predicted outcome, default is 0.5
-#' @param confint whether to compute 95% confidence interval, default is TRUE
-#' @param bootstraps the number of bootstrap samples, default is 1000
-#' @param digits the number of digits to round the results to, default is 3
-#' @param message whether to print the results, default is TRUE
+#' @param outcome Name of the outcome variable, it must be binary
+#' @param group Name of the sensitive attribute
+#' @param probs Name of the predicted outcome variable
+#' @param cutoff Threshold for the predicted outcome, default is 0.5
+#' @param confint Whether to compute 95% confidence interval, default is TRUE
+#' @param bootstraps Number of bootstrap samples, default is 1000
+#' @param digits Number of digits to round the results to, default is 2
+#' @param message Whether to print the results, default is TRUE
 #' @return A list containing the following elements:
-#'  - TPR_Group1: True Positive Rate for the first group, rounded to the
-#'  specified number of digits.
-#'  - TPR_Group2: True Positive Rate for the second group, rounded to the
-#'  specified number of digits.
+#'  - TPR_Group1: True Positive Rate for the first group
+#'  - TPR_Group2: True Positive Rate for the second group
 #'  - TPR_Difference: The difference in True Positive Rates between the two
-#'  groups, rounded to the specified number of digits.
-#'  - FPR_Group1: False Positive Rate for the first group, rounded to the
-#'  specified number of digits.
-#'  - FPR_Group2: False Positive Rate for the second group, rounded to the
-#'  specified number of digits.
+#'  groups
+#'  - FPR_Group1: False Positive Rate for the first group
+#'  - FPR_Group2: False Positive Rate for the second group
 #'  - FPR_Difference: The difference in False Positive Rates between the two
-#'  groups, rounded to the specified number of digits.
+#'  groups
 #'  If confidence intervals are computed (`confint = TRUE`):
 #'  - TPR_Diff_CI: A vector of length 2 providing the lower and upper bounds
-#'  of the 95% confidence interval for the TPR difference, rounded to the
-#'  specified number of digits.
+#'  of the 95% confidence interval for the TPR difference
 #'  - FPR_Diff_CI: A vector of length 2 providing the lower and upper bounds
-#'  of the 95% confidence interval for the FPR difference, rounded to the
-#'  specified number of digits.
+#'  of the 95% confidence interval for the FPR difference
 #' @export
 
 check_equalized_odds <- function(data, outcome, group, probs, cutoff = 0.5,
                                  confint = TRUE, bootstraps = 1000,
-                                 digits = 3, message = TRUE) {
+                                 digits = 2, message = TRUE) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
@@ -142,52 +137,85 @@ check_equalized_odds <- function(data, outcome, group, probs, cutoff = 0.5,
     cutoff = cutoff
   )
 
+  tpr$TPR_Diff <- tpr[[1]] - tpr[[2]]
+  fpr$FPR_Diff <- fpr[[1]] - fpr[[2]]
+
   # Calculate confidence interval
   if (confint) {
     se <- lapply(1:bootstraps, function(j) {
-      data_boot <- data[sample(nrow(data), replace = TRUE), ]
-      tpr_se <- get_tpr(
-        data = data_boot, outcome = outcome, group = group,
-        probs = probs, cutoff = cutoff
+      # bootstrap within each group
+      group1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
+        replace = TRUE
       )
-      fpr_se <- get_fpr(
-        data = data_boot, outcome = outcome, group = group,
-        probs = probs, cutoff = cutoff
+      group2 <- sample(which(data[[group]] == unique(data[[group]])[2]),
+        replace = TRUE
       )
-      cbind(tpr_se, fpr_se[, -1])
-    }) %>%
-      do.call(rbind, .) %>%
-      dplyr::group_by(!!rlang::sym(group)) %>%
-      dplyr::summarize_all(~ stats::sd(logit(.))) %>%
-      dplyr::rename(tpr_se = tpr, tpr_diff_se = tpr_diff, fpr_se = fpr, fpr_diff_se = fpr_diff)
+      data_boot <- rbind(data[group1, ], data[group2, ])
 
-    tpr_fpr <- cbind(tpr, fpr[-1]) %>%
-      dplyr::inner_join(se, by = group) %>%
-      dplyr::mutate(
-        tpr_lower = expit(logit(tpr) - 1.96 * tpr_se),
-        tpr_upper = expit(logit(tpr) + 1.96 * tpr_se),
-        tpr_diff_lower = expit(logit(tpr_diff) - 1.96 * tpr_diff_se),
-        tpr_diff_upper = expit(logit(tpr_diff) + 1.96 * tpr_diff_se),
-        fpr_lower = expit(logit(fpr) - 1.96 * fpr_se),
-        fpr_upper = expit(logit(fpr) + 1.96 * fpr_se),
-        fpr_diff_lower = expit(logit(fpr_diff) - 1.96 * fpr_diff_se),
-        fpr_diff_upper = expit(logit(fpr_diff) + 1.96 * fpr_diff_se)
-      ) %>%
-      dplyr::select(
-        !!rlang::sym(group), tpr, tpr_lower, tpr_upper, tpr_diff, tpr_diff_lower, tpr_diff_upper,
-        fpr, fpr_lower, fpr_upper, fpr_diff, fpr_diff_lower, fpr_diff_upper
-      ) %>%
-      dplyr::mutate(
-        tpr_ci = paste0("[", round(tpr_lower, 3), ", ", round(tpr_upper, 3), "]"),
-        tpr_diff_ci = paste0("[", round(tpr_diff_lower, 3), ", ", round(tpr_diff_upper, 3), "]"),
-        fpr_ci = paste0("[", round(fpr_lower, 3), ", ", round(fpr_upper, 3), "]"),
-        fpr_diff_ci = paste0("[", round(fpr_diff_lower, 3), ", ", round(fpr_diff_upper, 3), "]")
-      ) %>%
-      dplyr::select(-tpr_lower, -tpr_upper, -tpr_diff_lower, -tpr_diff_upper, -fpr_lower, -fpr_upper, -fpr_diff_lower, -fpr_diff_upper)
-    tpr_fpr[, c("gender", "tpr", "tpr_ci", "fpr", "fpr_ci", "tpr_diff", "tpr_diff_ci", "fpr_diff", "fpr_diff_ci")]
-  } else {
-    return(cbind(tpr, fpr[-1]))
+      tpr <- get_tpr(
+        data = data_boot, outcome = outcome, group = group,
+        probs = probs, cutoff = cutoff
+      )
+      fpr <- get_fpr(
+        data = data_boot, outcome = outcome, group = group,
+        probs = probs, cutoff = cutoff
+      )
+
+      list(se_tpr = tpr[[1]] - tpr[[2]], se_fpr = fpr[[1]] - fpr[[2]])
+    })
+
+    tpr$TPR_Diff_CI <- c(
+      tpr$TPR_Diff - 1.96 * sd(unlist(lapply(se, function(x) x$se_tpr))),
+      tpr$TPR_Diff + 1.96 * sd(unlist(lapply(se, function(x) x$se_tpr)))
+    )
+    fpr$FPR_Diff_CI <- c(
+      fpr$FPR_Diff - 1.96 * sd(unlist(lapply(se, function(x) x$se_fpr))),
+      fpr$FPR_Diff + 1.96 * sd(unlist(lapply(se, function(x) x$se_fpr)))
+    )
   }
+
+  if (message) {
+    cat(
+      "TPR for Group", unique(data[[group]])[1], "is",
+      round(tpr[[1]], digits), "\n"
+    )
+    cat(
+      "TPR for Group", unique(data[[group]])[2], "is",
+      round(tpr[[2]], digits), "\n"
+    )
+    cat("Difference in TPR is", round(tpr$TPR_Diff, digits), "\n")
+    if (confint) {
+      cat(
+        "95% CI for the difference in TPR is",
+        round(tpr$TPR_Diff_CI[1], digits), "to",
+        round(tpr$TPR_Diff_CI[2], digits), "\n"
+      )
+    }
+    cat(
+      "FPR for Group", unique(data[[group]])[1], "is",
+      round(fpr[[1]], digits), "\n"
+    )
+    cat(
+      "FPR for Group", unique(data[[group]])[2], "is",
+      round(fpr[[2]], digits), "\n"
+    )
+    cat("Difference in FPR is", round(fpr$FPR_Diff, digits), "\n")
+    if (confint) {
+      cat(
+        "95% CI for the difference in FPR is",
+        round(fpr$FPR_Diff_CI[1], digits), "to",
+        round(fpr$FPR_Diff_CI[2], digits), "\n"
+      )
+      if ((tpr$TPR_Diff_CI[1] > 0 | tpr$TPR_Diff_CI[2] < 0) |
+        (fpr$FPR_Diff_CI[1] > 0 | fpr$FPR_Diff_CI[2] < 0)) {
+        cat("There is evidence that model does not satisfy the equalized odds.\n")
+      } else {
+        cat("There is not enough evidence that the model does not satisfy the
+            equalized odds criterion.\n")
+      }
+    }
+  }
+  return(c(tpr, fpr))
 }
 
 #' Examine statistical parity of a model

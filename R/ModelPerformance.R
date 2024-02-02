@@ -31,24 +31,19 @@ get_tpr <- function(data, outcome, group, probs, cutoff = 0.5) {
 #' @param group the name of the sensitive attribute
 #' @param probs the name of the predicted outcome variable
 #' @param cutoff the threshold for the predicted outcome, default is 0.5
-#' @return a vector of false positive rates and the difference
-#' @importFrom magrittr %>%
+#' @return a list of false positive rates
 #' @noRd
 
 get_fpr <- function(data, outcome, group, probs, cutoff = 0.5) {
-  # Convert strings to symbols if necessary
-  outcome_sym <- rlang::sym(outcome)
-  group_sym <- rlang::sym(group)
-  probs_sym <- rlang::sym(probs)
-
-  # Calculate FPR
-  result <- data %>%
-    dplyr::filter(!!outcome_sym == 0) %>%
-    dplyr::group_by(!!group_sym) %>%
-    dplyr::summarize(fpr = mean(!!probs_sym >= cutoff), .groups = "drop") %>%
-    dplyr::mutate(fpr_diff = abs(diff(fpr)))
-
-  return(result)
+  fpr <- list()
+  for (i in unique(data[, group])) {
+    fp <- sum(data[, outcome] == 0 &
+      data[, group] == i &
+      data[, probs] >= cutoff)
+    p <- sum(data[, outcome] == 1 & data[, group] == i)
+    fpr[[paste0("FPR_", i)]] <- fp / p
+  }
+  return(fpr)
 }
 
 #' Calculate the positive prediction rate
