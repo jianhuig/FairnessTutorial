@@ -334,7 +334,7 @@ check_statistical_parity <- function(data, outcome, group, probs, cutoff = 0.5,
 #'  Prediction Rate
 #' @export
 
-check_cond_statistical_parity <- function(data, outcome, group,
+check_conditional_statistical_parity <- function(data, outcome, group,
                                            group2, condition, probs,
                                            cutoff = 0.5, confint = TRUE,
                                            bootstraps = 1000, message = TRUE,
