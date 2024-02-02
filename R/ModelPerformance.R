@@ -9,24 +9,19 @@
 #' @param group the name of the sensitive attribute
 #' @param probs the name of the predicted outcome variable
 #' @param cutoff the threshold for the predicted outcome, default is 0.5
-#' @return a vector of true positive rates and the difference
-#' @importFrom magrittr %>%
+#' @return a list of true positive rates
 #' @noRd
 
 get_tpr <- function(data, outcome, group, probs, cutoff = 0.5) {
-  # Convert strings to symbols if necessary
-  outcome_sym <- rlang::sym(outcome)
-  group_sym <- rlang::sym(group)
-  probs_sym <- rlang::sym(probs)
-
-  # Calculate TPR
-  result <- data %>%
-    dplyr::filter(!!outcome_sym == 1) %>%
-    dplyr::group_by(!!group_sym) %>%
-    dplyr::summarize(tpr = mean(!!probs_sym >= cutoff), .groups = "drop") %>%
-    dplyr::mutate(tpr_diff = abs(diff(tpr)))
-
-  return(result)
+  tpr <- list()
+  for (i in unique(data[, group])) {
+    tp <- sum(data[, outcome] == 1 &
+      data[, group] == i &
+      data[, probs] >= cutoff)
+    p <- sum(data[, outcome] == 1 & data[, group] == i)
+    tpr[[paste0("TPR_", i)]] <- tp / p
+  }
+  return(tpr)
 }
 
 #' Calculate the false positive rate
@@ -138,7 +133,7 @@ get_ppv <- function(data, outcome, group, probs, cutoff = 0.5) {
     dplyr::filter(!!probs_sym >= cutoff) %>%
     dplyr::group_by(!!group_sym) %>%
     dplyr::summarize(ppv = mean(!!outcome_sym == 1), .groups = "drop") %>%
-    dplyr::mutate(ppv_diff = abs(diff(ppv, default=0)))
+    dplyr::mutate(ppv_diff = abs(diff(ppv, default = 0)))
 
   return(result)
 }

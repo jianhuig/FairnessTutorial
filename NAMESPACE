@@ -3,6 +3,7 @@
 export(accuracy_parity)
 export(balance_negative)
 export(balance_positive)
+export(brier_score_parity)
 export(conditional_statistical_parity)
 export(conditional_use_accuracy_equality)
 export(equal_opportunity)
