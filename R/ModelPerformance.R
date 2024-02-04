@@ -99,24 +99,20 @@ get_ppv <- function(data, outcome, group, probs, cutoff = 0.5) {
 #' @param group the name of the sensitive attribute
 #' @param probs the name of the predicted outcome variable
 #' @param cutoff the threshold for the predicted outcome, default is 0.5
-#' @return a vector of negative predictive value and the difference
-#' @importFrom magrittr %>%
+#' @return  a list of negative predictive value
 #' @noRd
 
 get_npv <- function(data, outcome, group, probs, cutoff = 0.5) {
-  # Convert strings to symbols if necessary
-  outcome_sym <- rlang::sym(outcome)
-  group_sym <- rlang::sym(group)
-  probs_sym <- rlang::sym(probs)
-
-  # Calculate NPV
-  result <- data %>%
-    dplyr::filter(!!probs_sym < cutoff) %>%
-    dplyr::group_by(!!group_sym) %>%
-    dplyr::summarize(npv = mean(!!outcome_sym == 0), .groups = "drop") %>%
-    dplyr::mutate(npv_diff = abs(diff(npv)))
-
-  return(result)
+  npv <- list()
+  for (i in unique(data[, group])) {
+    tn <- sum(data[, outcome] == 0 &
+      data[, group] == i &
+      data[, probs] < cutoff)
+    nn <- sum(data[, group] == i &
+      data[, probs] < cutoff)
+    npv[[paste0("NPV_", i)]] <- tn / nn
+  }
+  return(npv)
 }
 
 #' Calculate the accuracy

@@ -566,18 +566,37 @@ check_predictive_equality <- function(data, outcome, group, probs, cutoff = 0.5,
 #' Examine conditional use accuracy equality of a model
 #' @param data Data frame containing the outcome, predicted outcome, and
 #' sensitive attribute
-#' @param outcome the name of the outcome variable, it must be binary
-#' @param group the name of the sensitive attribute
-#' @param probs the name of the predicted outcome variable
-#' @param cutoff the threshold for the predicted outcome, default is 0.5
-#' @param confint whether to compute 95% confidence interval, default is TRUE
-#' @param bootstraps the number of bootstrap samples, default is 1000
-#' @return a list of positive predictive value (ppv), negative predictive value (npv), the differences, and their confidence interval
-#' @importFrom magrittr %>%
+#' @param outcome Name of the outcome variable, it must be binary
+#' @param group Name of the sensitive attribute
+#' @param probs Name of the predicted outcome variable
+#' @param cutoff Threshold for the predicted outcome, default is 0.5
+#' @param confint Whether to compute 95% confidence interval, default is TRUE
+#' @param bootstraps Number of bootstrap samples, default is 1000
+#' @param digits Number of digits to round the results to, default is 2
+#' @param message Whether to print the results, default is TRUE
+#' @return A list containing the following elements:
+#' - PPV_Group1: Positive Predictive Value for the first group
+#' - PPV_Group2: Positive Predictive Value for the second group
+#' - PPV_Diff: Difference in Positive Predictive Value
+#' - npvGroup1: Negative Predictive Value for the first group
+#' - npvGroup2: Negative Predictive Value for the second group
+#' - npvDiff: Difference in Negative Predictive Value
+#' If confidence intervals are computed (`confint = TRUE`):
+#' - PPV_Diff_CI: 95% confidence interval for the difference in Positive
+#' Predictive Value
+#' - npvDiff_CI: 95% confidence interval for the difference in Negative
+#' Predictive Value
 #' @export
 
-conditional_use_accuracy_equality <- function(data, outcome, group, probs, cutoff = 0.5,
-                                              confint = TRUE, bootstraps = 1000) {
+test_cond_acc_eq <- function(data, outcome, group, probs, cutoff = 0.5,
+                                              confint = TRUE, bootstraps = 1000,
+                             digits = 2, message = TRUE) {
+  # Check if outcome is binary
+  unique_values <- unique(data[[outcome]])
+  if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
+    stop("Outcome must be binary (containing only 0 and 1).")
+  }
+
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
@@ -592,52 +611,86 @@ conditional_use_accuracy_equality <- function(data, outcome, group, probs, cutof
     data = data, outcome = outcome, group = group, probs = probs,
     cutoff = cutoff
   )
+  ppv$PPV_Diff <- ppv[[1]] - ppv[[2]]
+  npv$npvDiff <- npv[[1]] - npv[[2]]
 
   # Calculate confidence interval
   if (confint) {
     se <- lapply(1:bootstraps, function(j) {
-      data_boot <- data[sample(nrow(data), replace = TRUE), ]
-      ppv_se <- get_ppv(
-        data = data_boot, outcome = outcome, group = group,
-        probs = probs, cutoff = cutoff
+      # bootstrap within each group
+      group1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
+                       replace = TRUE
       )
-      npv_se <- get_npv(
-        data = data_boot, outcome = outcome, group = group,
-        probs = probs, cutoff = cutoff
+      group2 <- sample(which(data[[group]] == unique(data[[group]])[2]),
+                       replace = TRUE
       )
-      cbind(ppv_se, npv_se[, -1])
-    }) %>%
-      do.call(rbind, .) %>%
-      dplyr::group_by(!!rlang::sym(group)) %>%
-      dplyr::summarize_all(~ stats::sd(logit(.))) %>%
-      dplyr::rename(ppv_se = ppv, ppv_diff_se = ppv_diff, npv_se = npv, npv_diff_se = npv_diff)
+      data_boot <- rbind(data[group1, ], data[group2, ])
 
-    cbind(ppv, npv[-1]) %>%
-      dplyr::inner_join(se, by = group) %>%
-      dplyr::mutate(
-        ppv_lower = expit(logit(ppv) - 1.96 * ppv_se),
-        ppv_upper = expit(logit(ppv) + 1.96 * ppv_se),
-        ppv_diff_lower = expit(logit(ppv_diff) - 1.96 * ppv_diff_se),
-        ppv_diff_upper = expit(logit(ppv_diff) + 1.96 * ppv_diff_se),
-        npv_lower = expit(logit(npv) - 1.96 * npv_se),
-        npv_upper = expit(logit(npv) + 1.96 * npv_se),
-        npv_diff_lower = expit(logit(npv_diff) - 1.96 * npv_diff_se),
-        npv_diff_upper = expit(logit(npv_diff) + 1.96 * npv_diff_se)
-      ) %>%
-      dplyr::select(
-        !!rlang::sym(group), ppv, ppv_lower, ppv_upper, ppv_diff, ppv_diff_lower, ppv_diff_upper,
-        npv, npv_lower, npv_upper, npv_diff_lower, npv_diff_upper
-      ) %>%
-      dplyr::mutate(
-        ppv_ci = paste0("[", round(ppv_lower, 3), ", ", round(ppv_upper, 3), "]"),
-        ppv_diff_ci = paste0("[", round(ppv_diff_lower, 3), ", ", round(ppv_diff_upper, 3), "]"),
-        npv_ci = paste0("[", round(npv_lower, 3), ", ", round(npv_upper, 3), "]"),
-        npv_diff_ci = paste0("[", round(npv_diff_lower, 3), ", ", round(npv_diff_upper, 3), "]")
-      ) %>%
-      dplyr::select(-ppv_lower, -ppv_upper, -ppv_diff_lower, -ppv_diff_upper, -npv_lower, -npv_upper, -npv_diff_lower, -npv_diff_upper)
-  } else {
-    return(cbind(ppv, npv[-1]))
+      ppv <- get_ppv(
+        data = data_boot, outcome = outcome, group = group,
+        probs = probs, cutoff = cutoff
+      )
+      npv <- get_npv(
+        data = data_boot, outcome = outcome, group = group,
+        probs = probs, cutoff = cutoff
+      )
+
+      list(se_ppv = ppv[[1]] - ppv[[2]], se_npv = npv[[1]] - npv[[2]])
+    })
+
+    ppv$PPV_Diff_CI <- c(
+      ppv$PPV_Diff - 1.96 * sd(unlist(lapply(se, function(x) x$se_ppv))),
+      ppv$PPV_Diff + 1.96 * sd(unlist(lapply(se, function(x) x$se_ppv)))
+    )
+    npv$npvDiff_CI <- c(
+      npv$npvDiff - 1.96 * sd(unlist(lapply(se, function(x) x$se_npv))),
+      npv$npvDiff + 1.96 * sd(unlist(lapply(se, function(x) x$se_npv)))
+    )
   }
+
+  if (message) {
+    cat(
+      "Positive predictive value (PPV) for Group", unique(data[[group]])[1], "is",
+      round(ppv[[1]], digits), "\n"
+    )
+    cat(
+      "PPV for Group", unique(data[[group]])[2], "is",
+      round(ppv[[2]], digits), "\n"
+    )
+    cat("Difference in PPV is", round(ppv$PPV_Diff, digits), "\n")
+    if (confint) {
+      cat(
+        "95% CI for the difference in PPV is",
+        round(ppv$PPV_Diff_CI[1], digits), "to",
+        round(ppv$PPV_Diff_CI[2], digits), "\n"
+      )
+    }
+    cat(
+      "Negative predictive value (NPV) for Group", unique(data[[group]])[1], "is",
+      round(npv[[1]], digits), "\n"
+    )
+    cat(
+      "NPV for Group", unique(data[[group]])[2], "is",
+      round(npv[[2]], digits), "\n"
+    )
+    cat("Difference in NPV is", round(npv$npvDiff, digits), "\n")
+    if (confint) {
+      cat(
+        "95% CI for the difference in NPV is",
+        round(npv$npvDiff_CI[1], digits), "to",
+        round(npv$npvDiff_CI[2], digits), "\n"
+      )
+      if (ppv$PPV_Diff_CI[1] > 0 | ppv$PPV_Diff_CI[2] < 0 |
+          npv$npvDiff_CI[1] > 0 | npv$npvDiff_CI[2] < 0) {
+        cat("There is enough evidence that the model does not satisfy
+            conditional use accuracy equality.\n")
+      } else {
+        cat("There is not enough evidence that the model does not satisfy
+            conditional use accuracy equality.\n")
+      }
+    }
+  }
+  return(c(ppv, npv))
 }
 
 #' Examine accuracy parity of a model
