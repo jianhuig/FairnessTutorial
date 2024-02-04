@@ -493,9 +493,9 @@ check_predictive_parity <- function(data, outcome, group, probs, cutoff = 0.5,
 #' Rate
 #' @export
 
-predictive_equality <- function(data, outcome, group, probs, cutoff = 0.5,
-                                confint = TRUE, bootstraps = 1000,
-                                digits = 2, message = TRUE) {
+check_predictive_equality <- function(data, outcome, group, probs, cutoff = 0.5,
+                                      confint = TRUE, bootstraps = 1000,
+                                      digits = 2, message = TRUE) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
@@ -531,7 +531,7 @@ predictive_equality <- function(data, outcome, group, probs, cutoff = 0.5,
 
     fpr$FPR_Diff_CI <- c(
       fpr$FPR_Diff - 1.96 * sd(unlist(se)),
-      fpr$FPR_Diff + -1.96 * sd(unlist(se))
+      fpr$FPR_Diff + 1.96 * sd(unlist(se))
     )
   }
 
@@ -552,10 +552,11 @@ predictive_equality <- function(data, outcome, group, probs, cutoff = 0.5,
         round(fpr$FPR_Diff_CI[2], digits), "\n"
       )
       if (fpr$FPR_Diff_CI[1] > 0 | fpr$FPR_Diff_CI[2] < 0) {
-        cat("There is evidence that model does not satisfy predictive parity.\n")
+        cat("There is evidence that model does not satisfy predictive
+            equality.\n")
       } else {
         cat("There is not enough evidence that the model does not satisfy
-            predictive parity.\n")
+            predictive equality.\n")
       }
     }
   }
