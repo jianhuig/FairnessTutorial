@@ -793,51 +793,72 @@ test_acc_parity <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @importFrom magrittr %>%
 #' @export
 
-brier_score_parity <- function(data, outcome, group, probs, cutoff = 0.5,
-                               confint = TRUE, bootstraps = 1000) {
+test_bs_parity <- function(data, outcome, group, probs, cutoff = 0.5,
+                               confint = TRUE, bootstraps = 1000,
+                           digits = 2, message = TRUE) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
     stop("Outcome must be binary (containing only 0 and 1).")
   }
 
-  brier_score <- get_brier_score(
+  bs <- get_brier_score(
     data = data, outcome = outcome, group = group, probs = probs,
     cutoff = cutoff
   )
 
-  # Calculate confidence interval
+  bs$BS_Diff <- bs[[1]] - bs[[2]]
+
   if (confint) {
-    brier_score_se <- lapply(1:bootstraps, function(j) {
-      data_boot <- data[sample(nrow(data), replace = TRUE), ]
-      get_brier_score(
+    se <- lapply(1:bootstraps, function(j) {
+      # bootstrap within each group
+      group1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
+                       replace = TRUE
+      )
+      group2 <- sample(which(data[[group]] == unique(data[[group]])[2]),
+                       replace = TRUE
+      )
+      data_boot <- rbind(data[group1, ], data[group2, ])
+
+      bs <- get_brier_score(
         data = data_boot, outcome = outcome, group = group,
         probs = probs, cutoff = cutoff
       )
-    }) %>%
-      do.call(rbind, .) %>%
-      dplyr::group_by(!!rlang::sym(group)) %>%
-      dplyr::summarize_all(function(x) stats::sd(logit(x))) %>%
-      dplyr::rename(brier_se = brier, diff_se = brier_diff)
-
-    brier_score <- brier_score %>%
-      dplyr::left_join(brier_score_se, by = group) %>%
-      dplyr::mutate(
-        brier_score_lower = brier - 1.96 * brier_se,
-        brier_score_upper = brier + 1.96 * brier_se,
-        brier_diff_lower = brier_diff - 1.96 * diff_se,
-        brier_diff_upper = brier_diff + 1.96 * diff_se
-      ) %>%
-      dplyr::select(!!rlang::sym(group), brier, brier_score_lower, brier_score_upper, brier_diff, brier_diff_lower, brier_diff_upper) %>%
-      dplyr::mutate(
-        brier_score_ci = paste0("[", round(brier_score_lower, 3), ", ", round(brier_score_upper, 3), "]"),
-        brier_diff_ci = paste0("[", round(brier_diff_lower, 3), ", ", round(brier_diff_upper, 3), "]")
-      ) %>%
-      dplyr::select(-brier_score_lower, -brier_score_upper, -brier_diff_lower, -brier_diff_upper)
-    brier_score[, c(1, 2, 4, 3, 5)]
-  } else {
-    return(brier_score)
+      bs[[1]] - bs[[2]]
+    })
+    bs$BS_Diff_CI <- c(
+      bs$BS_Diff - 1.96 * sd(unlist(se)),
+      bs$BS_Diff + 1.96 * sd(unlist(se))
+    )
   }
+
+  if (message) {
+    cat(
+      "Brier Score for Group", unique(data[[group]])[1], "is",
+      round(bs[[1]], digits), "\n"
+    )
+    cat(
+      "Brier Score for Group", unique(data[[group]])[2], "is",
+      round(bs[[2]], digits), "\n"
+    )
+    cat("Difference in Brier Score is", round(bs$BS_Diff, digits), "\n")
+    if (confint) {
+      cat(
+        "95% CI for the difference in Brier Score is",
+        round(bs$BS_Diff_CI[1], digits), "to",
+        round(bs$BS_Diff_CI[2], digits), "\n"
+      )
+      if (bs$BS_Diff_CI[1] > 0 | bs$BS_Diff_CI[2] < 0) {
+        cat("There is enough evidence that the model does not satisfy
+            Brier Score parity.\n")
+      } else {
+        cat("There is not enough evidence that the model does not satisfy
+            Brier Score parity.\n")
+      }
+    }
+  }
+
+  return(bs)
 }
 
 #' Examine treatment equality of a model

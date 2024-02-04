@@ -140,6 +140,26 @@ get_acc <- function(data, outcome, group, probs, cutoff = 0.5) {
   return(acc)
 }
 
+#' Calculate the brier score
+#' @param data Data frame containing the outcome, predicted outcome, and
+#' sensitive attribute
+#' @param outcome the name of the outcome variable, it must be binary
+#' @param group the name of the sensitive attribute
+#' @param probs the name of the predicted outcome variable
+#' @param cutoff the threshold for the predicted outcome, default is 0.5
+#' @return a list of brier score
+#' @noRd
+
+get_brier_score <- function(data, outcome, group, probs, cutoff = 0.5) {
+  brier_score <- list()
+  for (i in unique(data[, group])) {
+    sub_data <- data[data[, group] == i, ]
+    brier_score[[paste0("Brier_", i)]] <-
+      mean((sub_data[, outcome] - sub_data[, probs])^2)
+  }
+  return(brier_score)
+}
+
 #' Calculate the error ratio
 #' @param data Data frame containing the outcome, predicted outcome, and
 #' sensitive attribute
@@ -221,32 +241,6 @@ get_exp_neg <- function(data, outcome, group, probs, cutoff = 0.5) {
     dplyr::group_by(!!group_sym) %>%
     dplyr::summarize(exp_neg = mean(!!probs_sym), .groups = "drop") %>%
     dplyr::mutate(expeced_negative_diff = abs(diff(exp_neg)))
-
-  return(result)
-}
-
-#' Calculate the brier score
-#' @param data Data frame containing the outcome, predicted outcome, and
-#' sensitive attribute
-#' @param outcome the name of the outcome variable, it must be binary
-#' @param group the name of the sensitive attribute
-#' @param probs the name of the predicted outcome variable
-#' @param cutoff the threshold for the predicted outcome, default is 0.5
-#' @return a vector of brier score and the difference
-#' @importFrom magrittr %>%
-#' @noRd
-
-get_brier_score <- function(data, outcome, group, probs, cutoff = 0.5) {
-  # Convert strings to symbols if necessary
-  outcome_sym <- rlang::sym(outcome)
-  group_sym <- rlang::sym(group)
-  probs_sym <- rlang::sym(probs)
-
-  # Calculate PPR
-  result <- data %>%
-    dplyr::group_by(!!group_sym) %>%
-    dplyr::summarize(brier = mean((!!probs_sym - as.numeric(!!outcome_sym))^2), .groups = "drop") %>%
-    dplyr::mutate(brier_diff = abs(diff(brier)))
 
   return(result)
 }
