@@ -160,35 +160,27 @@ get_brier_score <- function(data, outcome, group, probs, cutoff = 0.5) {
   return(brier_score)
 }
 
-#' Calculate the error ratio
+#' Calculate the the raitio of false negative to false positive
 #' @param data Data frame containing the outcome, predicted outcome, and
 #' sensitive attribute
 #' @param outcome the name of the outcome variable, it must be binary
 #' @param group the name of the sensitive attribute
 #' @param probs the name of the predicted outcome variable
 #' @param cutoff the threshold for the predicted outcome, default is 0.5
-#' @return a vector of error ratio and the difference
-#' @importFrom magrittr %>%
+#' @return a list of the ratio of false negative to false positive
 #' @noRd
 
 get_err_ratio <- function(data, outcome, group, probs, cutoff = 0.5) {
-  # Convert strings to symbols if necessary
-  outcome_sym <- rlang::sym(outcome)
-  group_sym <- rlang::sym(group)
-  probs_sym <- rlang::sym(probs)
-
-  # Calculate Error Ratio
-  result <- data %>%
-    dplyr::group_by(!!group_sym) %>%
-    dplyr::summarize(
-      err_ratio =
-        sum(!!outcome_sym == 1 & !!probs_sym < cutoff) /
-          sum(!!outcome_sym == 0 & !!probs_sym >= cutoff),
-      .groups = "drop"
-    ) %>%
-    dplyr::mutate(err_ratio_diff = abs(diff(err_ratio)))
-
-  return(result)
+  err_ratio <- list()
+  for (i in unique(data[, group])) {
+    sub_data <- data[data[, group] == i, ]
+    fp <- sum(sub_data[, outcome] == 0 &
+      sub_data[, probs] >= cutoff)
+    fn <- sum(sub_data[, outcome] == 1 &
+      sub_data[, probs] < cutoff)
+    err_ratio[[paste0("FN/FP_", i)]] <- fn / fp
+  }
+  return(err_ratio)
 }
 
 #' Calculate the expected positive score

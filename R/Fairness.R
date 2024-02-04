@@ -880,8 +880,9 @@ test_bs_parity <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @importFrom magrittr %>%
 #' @export
 
-treatment_equality <- function(data, outcome, group, probs, cutoff = 0.5,
-                               confint = TRUE, bootstraps = 1000) {
+eval_treatment_equality <- function(data, outcome, group, probs, cutoff = 0.5,
+                               confint = TRUE, bootstraps = 1000,
+                               digits = 2, message = TRUE) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
@@ -893,38 +894,58 @@ treatment_equality <- function(data, outcome, group, probs, cutoff = 0.5,
     cutoff = cutoff
   )
 
-  # Calculate confidence interval
+  err_ratio$"FN/FP_Diff" <- err_ratio[[1]] - err_ratio[[2]]
+
   if (confint) {
-    err_ratio_se <- lapply(1:bootstraps, function(j) {
-      data_boot <- data[sample(nrow(data), replace = TRUE), ]
-      get_err_ratio(
+    se <- lapply(1:bootstraps, function(j) {
+      # bootstrap within each group
+      group1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
+                       replace = TRUE
+      )
+      group2 <- sample(which(data[[group]] == unique(data[[group]])[2]),
+                       replace = TRUE
+      )
+      data_boot <- rbind(data[group1, ], data[group2, ])
+
+      err_ratio <- get_err_ratio(
         data = data_boot, outcome = outcome, group = group,
         probs = probs, cutoff = cutoff
       )
-    }) %>%
-      do.call(rbind, .) %>%
-      dplyr::group_by(!!rlang::sym(group)) %>%
-      dplyr::summarize_all(function(x) stats::sd(logit(x))) %>%
-      dplyr::rename(err_ratio_se = err_ratio, err_ratio_diff_se = err_ratio_diff)
-
-    err_ratio <- err_ratio %>%
-      dplyr::left_join(err_ratio_se, by = group) %>%
-      dplyr::mutate(
-        err_ratio_lower = expit(logit(err_ratio) - 1.96 * err_ratio_se),
-        err_ratio_upper = expit(logit(err_ratio) + 1.96 * err_ratio_se),
-        err_ratio_diff_lower = expit(logit(err_ratio_diff) - 1.96 * err_ratio_diff_se),
-        err_ratio_diff_upper = expit(logit(err_ratio_diff) + 1.96 * err_ratio_diff_se)
-      ) %>%
-      dplyr::select(!!rlang::sym(group), err_ratio, err_ratio_lower, err_ratio_upper, err_ratio_diff, err_ratio_diff_lower, err_ratio_diff_upper) %>%
-      dplyr::mutate(
-        err_ratio_ci = paste0("[", round(err_ratio_lower, 3), ", ", round(err_ratio_upper, 3), "]"),
-        err_ratio_diff_ci = paste0("[", round(err_ratio_diff_lower, 3), ", ", round(err_ratio_diff_upper, 3), "]")
-      ) %>%
-      dplyr::select(-err_ratio_lower, -err_ratio_upper, -err_ratio_diff_lower, -err_ratio_diff_upper)
-    err_ratio[, c(1, 2, 4, 3, 5)]
-  } else {
-    return(err_ratio)
+      err_ratio[[1]] - err_ratio[[2]]
+    })
+    err_ratio$"FN/FP_Diff_CI" <- c(
+      err_ratio$"FN/FP_Diff" - 1.96 * sd(unlist(se)),
+      err_ratio$"FN/FP_Diff" + 1.96 * sd(unlist(se))
+    )
   }
+
+  if (message) {
+    cat(
+      "False negative (FN) / false positive (FP) ratio for Group", unique(data[[group]])[1], "is",
+      round(err_ratio[[1]], digits), "\n"
+    )
+    cat(
+      "FN/FP ratio for Group", unique(data[[group]])[2], "is",
+      round(err_ratio[[2]], digits), "\n"
+    )
+    cat("Difference in FN/FP ratio is", round(err_ratio$"FN/FP_Diff", digits), "\n")
+    if (confint) {
+      cat(
+        "95% CI for the difference in FN/FP ratio is",
+        round(err_ratio$"FN/FP_Diff_CI"[1], digits), "to",
+        round(err_ratio$"FN/FP_Diff_CI"[2], digits), "\n"
+      )
+      if (err_ratio$"FN/FP_Diff_CI"[1] > 0 | err_ratio$"FN/FP_Diff_CI"[2] < 0) {
+        cat("There is enough evidence that the model does not satisfy
+            treatment equality.\n")
+      } else {
+        cat("There is not enough evidence that the model does not satisfy
+            treatment equality.\n")
+      }
+    }
+  }
+
+  return(err_ratio)
 }
 
 #' Examine balance for positive class of a model
