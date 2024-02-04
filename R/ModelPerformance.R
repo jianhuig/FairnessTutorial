@@ -61,7 +61,8 @@ get_ppr <- function(data, outcome, group, probs, cutoff = 0.5) {
   for (i in unique(data[, group])) {
     pp <- sum(
       data[, group] == i &
-      data[, probs] >= cutoff)
+        data[, probs] >= cutoff
+    )
     n <- sum(data[, group] == i)
     ppr[[paste0("PPR_", i)]] <- pp / n
   }
@@ -75,24 +76,20 @@ get_ppr <- function(data, outcome, group, probs, cutoff = 0.5) {
 #' @param group the name of the sensitive attribute
 #' @param probs the name of the predicted outcome variable
 #' @param cutoff the threshold for the predicted outcome, default is 0.5
-#' @return a vector of positive predictive value and the difference
-#' @importFrom magrittr %>%
+#' @return a list of positive predictive value
 #' @noRd
 
 get_ppv <- function(data, outcome, group, probs, cutoff = 0.5) {
-  # Convert strings to symbols if necessary
-  outcome_sym <- rlang::sym(outcome)
-  group_sym <- rlang::sym(group)
-  probs_sym <- rlang::sym(probs)
-
-  # Calculate PPV
-  result <- data %>%
-    dplyr::filter(!!probs_sym >= cutoff) %>%
-    dplyr::group_by(!!group_sym) %>%
-    dplyr::summarize(ppv = mean(!!outcome_sym == 1), .groups = "drop") %>%
-    dplyr::mutate(ppv_diff = abs(diff(ppv, default = 0)))
-
-  return(result)
+  ppv <- list()
+  for (i in unique(data[, group])) {
+    tp <- sum(data[, outcome] == 1 &
+      data[, group] == i &
+      data[, probs] >= cutoff)
+    pp <- sum(data[, group] == i &
+      data[, probs] >= cutoff)
+    ppv[[paste0("PPV_", i)]] <- tp / pp
+  }
+  return(ppv)
 }
 
 #' Calculate the negative predictive value
