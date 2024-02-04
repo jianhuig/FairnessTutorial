@@ -14,16 +14,15 @@
 #' @param digits Number of digits to round the results to, default is 2
 #' @param message Whether to print the results, default is TRUE
 #' @return A list containing the following elements:
-#'   - TPR_Group1: True Positive Rate for the first group
-#'   - TPR_Group2: True Positive Rate for the second group
-#'   - TPR_Difference: The difference in True Positive Rates between the two
-#'   groups
-#'   If confidence intervals are computed (`confint = TRUE`):
-#'     - TPR_Diff_CI: A vector of length 2 providing the lower and upper bounds
-#'     of the 95% confidence interval for the TPR difference
+#' - TPR_Group1: True Positive Rate for the first group
+#' - TPR_Group2: True Positive Rate for the second group
+#' - TPR_Diff: The difference in True Positive Rates between the two groups
+#' If confidence intervals are computed (`confint = TRUE`):
+#' - TPR_Diff_CI: A vector of length 2 providing the lower and upper bounds of
+#' the 95% confidence interval for the TPR difference
 #' @export
 
-check_equal_opportunity <- function(data, outcome, group, probs, cutoff = 0.5,
+eval_eq_opp <- function(data, outcome, group, probs, cutoff = 0.5,
                                     confint = TRUE, bootstraps = 1000,
                                     digits = 2, message = TRUE) {
   # Check if outcome is binary
@@ -119,7 +118,7 @@ check_equal_opportunity <- function(data, outcome, group, probs, cutoff = 0.5,
 #'  of the 95% confidence interval for the FPR difference
 #' @export
 
-check_equalized_odds <- function(data, outcome, group, probs, cutoff = 0.5,
+eval_eq_odds <- function(data, outcome, group, probs, cutoff = 0.5,
                                  confint = TRUE, bootstraps = 1000,
                                  digits = 2, message = TRUE) {
   # Check if outcome is binary
@@ -238,7 +237,7 @@ check_equalized_odds <- function(data, outcome, group, probs, cutoff = 0.5,
 #'   Prediction Rate
 #' @export
 
-check_statistical_parity <- function(data, outcome, group, probs, cutoff = 0.5,
+eval_stats_parity <- function(data, outcome, group, probs, cutoff = 0.5,
                                      confint = TRUE, bootstraps = 1000, digits = 2,
                                      message = TRUE) {
   # Check if outcome is binary
@@ -334,7 +333,7 @@ check_statistical_parity <- function(data, outcome, group, probs, cutoff = 0.5,
 #'  Prediction Rate
 #' @export
 
-check_conditional_statistical_parity <- function(data, outcome, group,
+eval_cond_stats_parity <- function(data, outcome, group,
                                                  group2, condition, probs,
                                                  cutoff = 0.5, confint = TRUE,
                                                  bootstraps = 1000, message = TRUE,
@@ -405,7 +404,7 @@ check_conditional_statistical_parity <- function(data, outcome, group,
 #' Predictive Value
 #' @export
 
-check_predictive_parity <- function(data, outcome, group, probs, cutoff = 0.5,
+eval_pred_parity <- function(data, outcome, group, probs, cutoff = 0.5,
                                     confint = TRUE, bootstraps = 1000,
                                     digits = 2, message = TRUE) {
   # Check if outcome is binary
@@ -493,7 +492,7 @@ check_predictive_parity <- function(data, outcome, group, probs, cutoff = 0.5,
 #' Rate
 #' @export
 
-check_predictive_equality <- function(data, outcome, group, probs, cutoff = 0.5,
+eval_pred_equality <- function(data, outcome, group, probs, cutoff = 0.5,
                                       confint = TRUE, bootstraps = 1000,
                                       digits = 2, message = TRUE) {
   # Check if outcome is binary
@@ -588,7 +587,7 @@ check_predictive_equality <- function(data, outcome, group, probs, cutoff = 0.5,
 #' Predictive Value
 #' @export
 
-test_cond_acc_eq <- function(data, outcome, group, probs, cutoff = 0.5,
+eval_cond_acc_equality <- function(data, outcome, group, probs, cutoff = 0.5,
                                               confint = TRUE, bootstraps = 1000,
                              digits = 2, message = TRUE) {
   # Check if outcome is binary
@@ -713,7 +712,7 @@ test_cond_acc_eq <- function(data, outcome, group, probs, cutoff = 0.5,
 #' - 95% CI for the difference in accuracy
 #' @export
 
-test_acc_parity <- function(data, outcome, group, probs, cutoff = 0.5,
+eval_acc_parity <- function(data, outcome, group, probs, cutoff = 0.5,
                             confint = TRUE, bootstraps = 1000,
                             digits = 2, message = TRUE) {
   # Check if outcome is binary
@@ -799,7 +798,7 @@ test_acc_parity <- function(data, outcome, group, probs, cutoff = 0.5,
 #' - 95% CI for the difference in Brier Score
 #' @export
 
-test_bs_parity <- function(data, outcome, group, probs, cutoff = 0.5,
+eval_bs_parity <- function(data, outcome, group, probs, cutoff = 0.5,
                                confint = TRUE, bootstraps = 1000,
                            digits = 2, message = TRUE) {
   # Check if outcome is binary
