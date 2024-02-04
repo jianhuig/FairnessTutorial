@@ -870,14 +870,20 @@ test_bs_parity <- function(data, outcome, group, probs, cutoff = 0.5,
 #' Examine treatment equality of a model
 #' @param data Data frame containing the outcome, predicted outcome, and
 #' sensitive attribute
-#' @param outcome the name of the outcome variable, it must be binary
-#' @param group the name of the sensitive attribute
-#' @param probs the name of the predicted outcome variable
-#' @param cutoff the threshold for the predicted outcome, default is 0.5
-#' @param confint whether to compute 95% confidence interval, default is TRUE
-#' @param bootstraps the number of bootstrap samples, default is 1000
-#' @return a list of error ratio (FN/FP), the difference, and their confidence interval
-#' @importFrom magrittr %>%
+#' @param outcome Name of the outcome variable
+#' @param group Name of the sensitive attribute
+#' @param probs Predicted probabilities
+#' @param cutoff Cutoff value for the predicted probabilities
+#' @param confint Logical indicating whether to calculate confidence intervals
+#' @param bootstraps Number of bootstraps to use for confidence intervals
+#' @param digits Number of digits to round the results to, default is 2
+#' @param message Whether to print the results, default is TRUE
+#' @return A list containing the following elements:
+#' - False Negative / False Positive ratio for Group 1
+#' - False Negative / False Positive ratio for Group 2
+#' - Difference in False Negative / False Positive ratio
+#' If confidence intervals are computed (`confint = TRUE`):
+#' - 95% CI for the difference in False Negative / False Positive ratio
 #' @export
 
 eval_treatment_equality <- function(data, outcome, group, probs, cutoff = 0.5,

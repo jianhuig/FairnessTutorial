@@ -20,20 +20,31 @@ eval_treatment_equality(
 \item{data}{Data frame containing the outcome, predicted outcome, and
 sensitive attribute}
 
-\item{outcome}{the name of the outcome variable, it must be binary}
+\item{outcome}{Name of the outcome variable}
 
-\item{group}{the name of the sensitive attribute}
+\item{group}{Name of the sensitive attribute}
 
-\item{probs}{the name of the predicted outcome variable}
+\item{probs}{Predicted probabilities}
 
-\item{cutoff}{the threshold for the predicted outcome, default is 0.5}
+\item{cutoff}{Cutoff value for the predicted probabilities}
 
-\item{confint}{whether to compute 95\% confidence interval, default is TRUE}
+\item{confint}{Logical indicating whether to calculate confidence intervals}
 
-\item{bootstraps}{the number of bootstrap samples, default is 1000}
+\item{bootstraps}{Number of bootstraps to use for confidence intervals}
+
+\item{digits}{Number of digits to round the results to, default is 2}
+
+\item{message}{Whether to print the results, default is TRUE}
 }
 \value{
-a list of error ratio (FN/FP), the difference, and their confidence interval
+A list containing the following elements:
+\itemize{
+\item False Negative / False Positive ratio for Group 1
+\item False Negative / False Positive ratio for Group 2
+\item Difference in False Negative / False Positive ratio
+If confidence intervals are computed (\code{confint = TRUE}):
+\item 95\% CI for the difference in False Negative / False Positive ratio
+}
 }
 \description{
 Examine treatment equality of a model
