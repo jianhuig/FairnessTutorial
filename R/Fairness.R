@@ -612,7 +612,7 @@ test_cond_acc_eq <- function(data, outcome, group, probs, cutoff = 0.5,
     cutoff = cutoff
   )
   ppv$PPV_Diff <- ppv[[1]] - ppv[[2]]
-  npv$npvDiff <- npv[[1]] - npv[[2]]
+  npv$NPV_Diff <- npv[[1]] - npv[[2]]
 
   # Calculate confidence interval
   if (confint) {
@@ -642,9 +642,9 @@ test_cond_acc_eq <- function(data, outcome, group, probs, cutoff = 0.5,
       ppv$PPV_Diff - 1.96 * sd(unlist(lapply(se, function(x) x$se_ppv))),
       ppv$PPV_Diff + 1.96 * sd(unlist(lapply(se, function(x) x$se_ppv)))
     )
-    npv$npvDiff_CI <- c(
-      npv$npvDiff - 1.96 * sd(unlist(lapply(se, function(x) x$se_npv))),
-      npv$npvDiff + 1.96 * sd(unlist(lapply(se, function(x) x$se_npv)))
+    npv$NPV_Diff_CI <- c(
+      npv$NPV_Diff - 1.96 * sd(unlist(lapply(se, function(x) x$se_npv))),
+      npv$NPV_Diff + 1.96 * sd(unlist(lapply(se, function(x) x$se_npv)))
     )
   }
 
@@ -673,15 +673,16 @@ test_cond_acc_eq <- function(data, outcome, group, probs, cutoff = 0.5,
       "NPV for Group", unique(data[[group]])[2], "is",
       round(npv[[2]], digits), "\n"
     )
-    cat("Difference in NPV is", round(npv$npvDiff, digits), "\n")
+    cat("Difference in NPV is", round(npv$NPV_Diff, digits), "\n")
     if (confint) {
       cat(
         "95% CI for the difference in NPV is",
-        round(npv$npvDiff_CI[1], digits), "to",
-        round(npv$npvDiff_CI[2], digits), "\n"
+        round(npv$NPV_Diff_CI[1], digits), "to",
+        round(npv$NPV_Diff_CI[2], digits), "\n"
       )
+
       if (ppv$PPV_Diff_CI[1] > 0 | ppv$PPV_Diff_CI[2] < 0 |
-          npv$npvDiff_CI[1] > 0 | npv$npvDiff_CI[2] < 0) {
+          npv$NPV_Diff_CI[1] > 0 | npv$NPV_Diff_CI[2] < 0) {
         cat("There is enough evidence that the model does not satisfy
             conditional use accuracy equality.\n")
       } else {
@@ -696,18 +697,25 @@ test_cond_acc_eq <- function(data, outcome, group, probs, cutoff = 0.5,
 #' Examine accuracy parity of a model
 #' @param data Data frame containing the outcome, predicted outcome, and
 #' sensitive attribute
-#' @param outcome the name of the outcome variable, it must be binary
-#' @param group the name of the sensitive attribute
-#' @param probs the name of the predicted outcome variable
-#' @param cutoff the threshold for the predicted outcome, default is 0.5
-#' @param confint whether to compute 95% confidence interval, default is TRUE
-#' @param bootstraps the number of bootstrap samples, default is 1000
-#' @return a list of model accuracy, the difference, and their confidence interval
-#' @importFrom magrittr %>%
+#' @param outcome Name of the outcome variable
+#' @param group Name of the sensitive attribute
+#' @param probs Predicted probabilities
+#' @param cutoff Cutoff value for the predicted probabilities
+#' @param confint Logical indicating whether to calculate confidence intervals
+#' @param bootstraps Number of bootstraps to use for confidence intervals
+#' @param digits Number of digits to round the results to, default is 2
+#' @param message Whether to print the results, default is TRUE
+#' @return A list containing the following elements:
+#' - Accuracy for Group 1
+#' - Accuracy for Group 2
+#' - Difference in accuracy
+#' If confidence intervals are computed (`confint = TRUE`):
+#' - 95% CI for the difference in accuracy
 #' @export
 
-accuracy_parity <- function(data, outcome, group, probs, cutoff = 0.5,
-                            confint = TRUE, bootstraps = 1000) {
+test_acc_parity <- function(data, outcome, group, probs, cutoff = 0.5,
+                            confint = TRUE, bootstraps = 1000,
+                            digits = 2, message = TRUE) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
@@ -719,38 +727,57 @@ accuracy_parity <- function(data, outcome, group, probs, cutoff = 0.5,
     cutoff = cutoff
   )
 
-  # Calculate confidence interval
+  acc$ACC_Diff <- acc[[1]] - acc[[2]]
+
   if (confint) {
-    acc_se <- lapply(1:bootstraps, function(j) {
-      data_boot <- data[sample(nrow(data), replace = TRUE), ]
-      get_acc(
+    se <- lapply(1:bootstraps, function(j) {
+      # bootstrap within each group
+      group1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
+                       replace = TRUE
+      )
+      group2 <- sample(which(data[[group]] == unique(data[[group]])[2]),
+                       replace = TRUE
+      )
+      data_boot <- rbind(data[group1, ], data[group2, ])
+
+      acc <- get_acc(
         data = data_boot, outcome = outcome, group = group,
         probs = probs, cutoff = cutoff
       )
-    }) %>%
-      do.call(rbind, .) %>%
-      dplyr::group_by(!!rlang::sym(group)) %>%
-      dplyr::summarize_all(function(x) stats::sd(logit(x))) %>%
-      dplyr::rename(acc_se = acc, acc_diff_se = acc_diff)
-
-    acc <- acc %>%
-      dplyr::left_join(acc_se, by = group) %>%
-      dplyr::mutate(
-        acc_lower = expit(logit(acc) - 1.96 * acc_se),
-        acc_upper = expit(logit(acc) + 1.96 * acc_se),
-        acc_diff_lower = expit(logit(acc_diff) - 1.96 * acc_diff_se),
-        acc_diff_upper = expit(logit(acc_diff) + 1.96 * acc_diff_se)
-      ) %>%
-      dplyr::select(!!rlang::sym(group), acc, acc_lower, acc_upper, acc_diff, acc_diff_lower, acc_diff_upper) %>%
-      dplyr::mutate(
-        acc_ci = paste0("[", round(acc_lower, 3), ", ", round(acc_upper, 3), "]"),
-        acc_diff_ci = paste0("[", round(acc_diff_lower, 3), ", ", round(acc_diff_upper, 3), "]")
-      ) %>%
-      dplyr::select(-acc_lower, -acc_upper, -acc_diff_lower, -acc_diff_upper)
-    acc[, c(1, 2, 4, 3, 5)]
-  } else {
-    return(acc)
+      acc[[1]] - acc[[2]]
+    })
+    acc$ACC_Diff_CI <- c(
+      acc$ACC_Diff - 1.96 * sd(unlist(se)),
+      acc$ACC_Diff + 1.96 * sd(unlist(se))
+    )
   }
+
+  if (message) {
+    cat(
+      "Accuracy for Group", unique(data[[group]])[1], "is",
+      round(acc[[1]], digits), "\n"
+    )
+    cat(
+      "Accuracy for Group", unique(data[[group]])[2], "is",
+      round(acc[[2]], digits), "\n"
+    )
+    cat("Difference in accuracy is", round(acc$ACC_Diff, digits), "\n")
+    if (confint) {
+      cat(
+        "95% CI for the difference in accuracy is",
+        round(acc$ACC_Diff_CI[1], digits), "to",
+        round(acc$ACC_Diff_CI[2], digits), "\n"
+      )
+      if (acc$ACC_Diff_CI[1] > 0 | acc$ACC_Diff_CI[2] < 0) {
+        cat("There is enough evidence that the model does not satisfy
+            accuracy parity.\n")
+      } else {
+        cat("There is not enough evidence that the model does not satisfy
+            accuracy parity.\n")
+      }
+    }
+  }
+  return(acc)
 }
 
 #' Examine Brier Score parity of a model

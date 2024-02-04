@@ -122,25 +122,22 @@ get_npv <- function(data, outcome, group, probs, cutoff = 0.5) {
 #' @param group the name of the sensitive attribute
 #' @param probs the name of the predicted outcome variable
 #' @param cutoff the threshold for the predicted outcome, default is 0.5
-#' @return a vector of model accuracy and the difference
-#' @importFrom magrittr %>%
+#' @return a list of accuracy
 #' @noRd
 
 get_acc <- function(data, outcome, group, probs, cutoff = 0.5) {
-  # Convert strings to symbols if necessary
-  outcome_sym <- rlang::sym(outcome)
-  group_sym <- rlang::sym(group)
-  probs_sym <- rlang::sym(probs)
-
-  data <- data %>% dplyr::mutate(pred = ifelse(!!probs_sym >= cutoff, 1, 0))
-
-  # Calculate Accuracy
-  result <- data %>%
-    dplyr::group_by(!!group_sym) %>%
-    dplyr::summarize(acc = mean(!!outcome_sym == pred), .groups = "drop") %>%
-    dplyr::mutate(acc_diff = abs(diff(acc)))
-
-  return(result)
+  acc <- list()
+  for (i in unique(data[, group])) {
+    tp <- sum(data[, outcome] == 1 &
+      data[, group] == i &
+      data[, probs] >= cutoff)
+    tn <- sum(data[, outcome] == 0 &
+      data[, group] == i &
+      data[, probs] < cutoff)
+    p <- sum(data[, group] == i)
+    acc[[paste0("ACC_", i)]] <- (tp + tn) / p
+  }
+  return(acc)
 }
 
 #' Calculate the error ratio
