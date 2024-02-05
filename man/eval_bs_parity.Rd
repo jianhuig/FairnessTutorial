@@ -9,7 +9,6 @@ eval_bs_parity(
   outcome,
   group,
   probs,
-  cutoff = 0.5,
   confint = TRUE,
   bootstraps = 1000,
   digits = 2,
@@ -26,8 +25,6 @@ sensitive attribute}
 
 \item{probs}{Predicted probabilities}
 
-\item{cutoff}{Cutoff value for the predicted probabilities}
-
 \item{confint}{Logical indicating whether to calculate confidence intervals}
 
 \item{bootstraps}{Number of bootstraps to use for confidence intervals}
@@ -43,7 +40,8 @@ A list containing the following elements:
 \item Brier Score for Group 2
 \item Difference in Brier Score
 If confidence intervals are computed (\code{confint = TRUE}):
-\item 95\% CI for the difference in Brier Score
+\item A vector of length 2 containing the lower and upper bounds of the 95\%
+confidence interval for the difference in Brier Score
 }
 }
 \description{

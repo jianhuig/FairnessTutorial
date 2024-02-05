@@ -42,14 +42,16 @@ A list containing the following elements:
 \item PPV_Group1: Positive Predictive Value for the first group
 \item PPV_Group2: Positive Predictive Value for the second group
 \item PPV_Diff: Difference in Positive Predictive Value
-\item npvGroup1: Negative Predictive Value for the first group
-\item npvGroup2: Negative Predictive Value for the second group
-\item npvDiff: Difference in Negative Predictive Value
+\item NPV_Group1: Negative Predictive Value for the first group
+\item NPV_Group2: Negative Predictive Value for the second group
+\item NPV_Diff: Difference in Negative Predictive Value
 If confidence intervals are computed (\code{confint = TRUE}):
-\item PPV_Diff_CI: 95\% confidence interval for the difference in Positive
-Predictive Value
-\item npvDiff_CI: 95\% confidence interval for the difference in Negative
-Predictive Value
+\item PPV_Diff_CI: A vector of length 2 containing the lower and upper bounds
+of the 95\% confidence interval for the difference in Positive Predictive
+Value
+\item NPV_Diff_CI: A vector of length 2 containing the lower and upper bounds
+of the 95\% confidence interval for the difference in Negative Predictive
+Value
 }
 }
 \description{

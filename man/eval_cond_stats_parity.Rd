@@ -54,8 +54,9 @@ A list containing the following elements:
 \item PPR_Group2: Positive Prediction Rate for the second group
 \item PPR_Diff: Difference in Positive Prediction Rate
 If confidence intervals are computed (\code{confint = TRUE}):
-\item PPR_Diff_CI: 95\% confidence interval for the difference in Positive
-Prediction Rate
+\item PPR_Diff_CI: A vector of length 2 containing the lower and upper bounds
+of the 95\% confidence interval for the difference in Positive Prediction
+Rate
 }
 }
 \description{

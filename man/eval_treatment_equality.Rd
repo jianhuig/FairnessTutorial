@@ -43,7 +43,8 @@ A list containing the following elements:
 \item False Negative / False Positive ratio for Group 2
 \item Difference in False Negative / False Positive ratio
 If confidence intervals are computed (\code{confint = TRUE}):
-\item 95\% CI for the difference in False Negative / False Positive ratio
+\item A vector of length 2 containing the lower and upper bounds of the 95\%
+confidence interval for the difference in False Negative / False Positive ratio
 }
 }
 \description{

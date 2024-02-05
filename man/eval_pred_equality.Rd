@@ -43,8 +43,8 @@ A list containing the following elements:
 \item FPR_Group2: False Positive Rate for the second group
 \item FPR_Diff: Difference in False Positive Rate
 If confidence intervals are computed (\code{confint = TRUE}):
-\item FPR_Diff_CI: 95\% confidence interval for the difference in False Positive
-Rate
+\item FPR_Diff_CI: A vector of length 2 containing the lower and upper bounds
+of the 95\% confidence interval for the difference in False Positive Rate
 }
 }
 \description{

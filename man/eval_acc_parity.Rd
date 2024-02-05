@@ -43,7 +43,8 @@ A list containing the following elements:
 \item Accuracy for Group 2
 \item Difference in accuracy
 If confidence intervals are computed (\code{confint = TRUE}):
-\item 95\% CI for the difference in accuracy
+\item A vector of length 2 containing the lower and upper bounds of the 95\%
+confidence interval for the difference in accuracy
 }
 }
 \description{

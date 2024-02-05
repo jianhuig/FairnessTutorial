@@ -43,8 +43,9 @@ A list containing the following elements:
 \item PPV_Group2: Positive Predictive Value for the second group
 \item PPV_Diff: Difference in Positive Predictive Value
 If confidence intervals are computed (\code{confint = TRUE}):
-\item PPV_Diff_CI: 95\% confidence interval for the difference in Positive
-Predictive Value
+\item PPV_Diff_CI: A vector of length 2 containing the lower and upper bounds
+of the 95\% confidence interval for the difference in Positive Predictive
+Value
 }
 }
 \description{

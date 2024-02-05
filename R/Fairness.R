@@ -23,8 +23,8 @@
 #' @export
 
 eval_eq_opp <- function(data, outcome, group, probs, cutoff = 0.5,
-                                    confint = TRUE, bootstraps = 1000,
-                                    digits = 2, message = TRUE) {
+                        confint = TRUE, bootstraps = 1000,
+                        digits = 2, message = TRUE) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
@@ -33,7 +33,7 @@ eval_eq_opp <- function(data, outcome, group, probs, cutoff = 0.5,
 
   tpr <- get_tpr(
     data = data, outcome = outcome, group = group, probs = probs,
-    cutoff = cutoff
+    cutoff = cutoff, digits = digits
   )
 
   tpr$TPR_Diff <- tpr[[1]] - tpr[[2]]
@@ -58,26 +58,26 @@ eval_eq_opp <- function(data, outcome, group, probs, cutoff = 0.5,
     })
 
     tpr$TPR_Diff_CI <- c(
-      tpr$TPR_Diff - 1.96 * sd(unlist(se)),
-      tpr$TPR_Diff + 1.96 * sd(unlist(se))
+      round(tpr$TPR_Diff - 1.96 * sd(unlist(se)), digits),
+      round(tpr$TPR_Diff + 1.96 * sd(unlist(se)), digits)
     )
   }
 
   if (message) {
     cat(
       "True positive rate (TPR) for Group", unique(data[[group]])[1], "is",
-      round(tpr[[1]], digits), "\n"
+      tpr[[1]], "\n"
     )
     cat(
       "TPR for Group", unique(data[[group]])[2], "is",
-      round(tpr[[2]], digits), "\n"
+      tpr[[2]], "\n"
     )
-    cat("Difference in TPR is", round(tpr$TPR_Diff, digits), "\n")
+    cat("Difference in TPR is", tpr$TPR_Diff, "\n")
     if (confint) {
       cat(
         "95% CI for the difference in TPR is",
-        round(tpr$TPR_Diff_CI[1], digits), "to",
-        round(tpr$TPR_Diff_CI[2], digits), "\n"
+        tpr$TPR_Diff_CI[1], "to",
+        tpr$TPR_Diff_CI[2], "\n"
       )
       if (tpr$TPR_Diff_CI[1] > 0 | tpr$TPR_Diff_CI[2] < 0) {
         cat("There is evidence that model does not satisfy equal opportunity.\n")
@@ -119,8 +119,8 @@ eval_eq_opp <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @export
 
 eval_eq_odds <- function(data, outcome, group, probs, cutoff = 0.5,
-                                 confint = TRUE, bootstraps = 1000,
-                                 digits = 2, message = TRUE) {
+                         confint = TRUE, bootstraps = 1000,
+                         digits = 2, message = TRUE) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
@@ -129,11 +129,11 @@ eval_eq_odds <- function(data, outcome, group, probs, cutoff = 0.5,
 
   tpr <- get_tpr(
     data = data, outcome = outcome, group = group, probs = probs,
-    cutoff = cutoff
+    cutoff = cutoff, digits = digits
   )
   fpr <- get_fpr(
     data = data, outcome = outcome, group = group, probs = probs,
-    cutoff = cutoff
+    cutoff = cutoff, digits = digits
   )
 
   tpr$TPR_Diff <- tpr[[1]] - tpr[[2]]
@@ -164,50 +164,55 @@ eval_eq_odds <- function(data, outcome, group, probs, cutoff = 0.5,
     })
 
     tpr$TPR_Diff_CI <- c(
-      tpr$TPR_Diff - 1.96 * sd(unlist(lapply(se, function(x) x$se_tpr))),
-      tpr$TPR_Diff + 1.96 * sd(unlist(lapply(se, function(x) x$se_tpr)))
+      round(tpr$TPR_Diff -
+        1.96 * sd(unlist(lapply(se, function(x) x$se_tpr))), digits),
+      round(tpr$TPR_Diff +
+        1.96 * sd(unlist(lapply(se, function(x) x$se_tpr))), digits)
     )
     fpr$FPR_Diff_CI <- c(
-      fpr$FPR_Diff - 1.96 * sd(unlist(lapply(se, function(x) x$se_fpr))),
-      fpr$FPR_Diff + 1.96 * sd(unlist(lapply(se, function(x) x$se_fpr)))
+      round(fpr$FPR_Diff -
+        1.96 * sd(unlist(lapply(se, function(x) x$se_fpr))), digits),
+      round(fpr$FPR_Diff +
+        1.96 * sd(unlist(lapply(se, function(x) x$se_fpr))), digits)
     )
   }
 
   if (message) {
     cat(
       "True positive rate (TPR) for Group", unique(data[[group]])[1], "is",
-      round(tpr[[1]], digits), "\n"
+      tpr[[1]], "\n"
     )
     cat(
       "TPR for Group", unique(data[[group]])[2], "is",
-      round(tpr[[2]], digits), "\n"
+      tpr[[2]], "\n"
     )
-    cat("Difference in TPR is", round(tpr$TPR_Diff, digits), "\n")
+    cat("Difference in TPR is", tpr$TPR_Diff, "\n")
     if (confint) {
       cat(
         "95% CI for the difference in TPR is",
-        round(tpr$TPR_Diff_CI[1], digits), "to",
-        round(tpr$TPR_Diff_CI[2], digits), "\n"
+        tpr$TPR_Diff_CI[1], "to",
+        tpr$TPR_Diff_CI[2], "\n"
       )
     }
     cat(
       "False positive rate (FPR) for Group", unique(data[[group]])[1], "is",
-      round(fpr[[1]], digits), "\n"
+      fpr[[1]], "\n"
     )
     cat(
       "FPR for Group", unique(data[[group]])[2], "is",
-      round(fpr[[2]], digits), "\n"
+      fpr[[2]], "\n"
     )
-    cat("Difference in FPR is", round(fpr$FPR_Diff, digits), "\n")
+    cat("Difference in FPR is", fpr$FPR_Diff, "\n")
     if (confint) {
       cat(
         "95% CI for the difference in FPR is",
-        round(fpr$FPR_Diff_CI[1], digits), "to",
-        round(fpr$FPR_Diff_CI[2], digits), "\n"
+        fpr$FPR_Diff_CI[1], "to",
+        fpr$FPR_Diff_CI[2], "\n"
       )
       if ((tpr$TPR_Diff_CI[1] > 0 | tpr$TPR_Diff_CI[2] < 0) |
         (fpr$FPR_Diff_CI[1] > 0 | fpr$FPR_Diff_CI[2] < 0)) {
-        cat("There is evidence that model does not satisfy the equalized odds.\n")
+        cat("There is evidence that model does not satisfy the equalized odds.
+            \n")
       } else {
         cat("There is not enough evidence that the model does not satisfy the
             equalized odds criterion.\n")
@@ -233,13 +238,14 @@ eval_eq_odds <- function(data, outcome, group, probs, cutoff = 0.5,
 #'   - PPR_Group2: Positive Prediction Rate for the second group
 #'   - PPR_Diff: Difference in Positive Prediction Rate
 #'   If confidence intervals are computed (`confint = TRUE`):
-#'   - PPR_Diff_CI: 95% confidence interval for the difference in Positive
-#'   Prediction Rate
+#'   - PPR_Diff_CI: A vector of length 2 containing the lower and upper bounds
+#'   of the 95% confidence interval for the difference in Positive Prediction
+#'   Rate
 #' @export
 
 eval_stats_parity <- function(data, outcome, group, probs, cutoff = 0.5,
-                                     confint = TRUE, bootstraps = 1000, digits = 2,
-                                     message = TRUE) {
+                              confint = TRUE, bootstraps = 1000, digits = 2,
+                              message = TRUE) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
@@ -248,7 +254,7 @@ eval_stats_parity <- function(data, outcome, group, probs, cutoff = 0.5,
 
   ppr <- get_ppr(
     data = data, outcome = outcome, group = group, probs = probs,
-    cutoff = cutoff
+    cutoff = cutoff, digits = digits
   )
 
   ppr$PPR_Diff <- ppr[[1]] - ppr[[2]]
@@ -273,8 +279,8 @@ eval_stats_parity <- function(data, outcome, group, probs, cutoff = 0.5,
     })
 
     ppr$PPR_Diff_CI <- c(
-      ppr$PPR_Diff - 1.96 * sd(unlist(se)),
-      ppr$PPR_Diff + 1.96 * sd(unlist(se))
+      round(ppr$PPR_Diff - 1.96 * sd(unlist(se)), digits),
+      round(ppr$PPR_Diff + 1.96 * sd(unlist(se)), digits)
     )
   }
 
@@ -329,15 +335,16 @@ eval_stats_parity <- function(data, outcome, group, probs, cutoff = 0.5,
 #'  - PPR_Group2: Positive Prediction Rate for the second group
 #'  - PPR_Diff: Difference in Positive Prediction Rate
 #'  If confidence intervals are computed (`confint = TRUE`):
-#'  - PPR_Diff_CI: 95% confidence interval for the difference in Positive
-#'  Prediction Rate
+#'  - PPR_Diff_CI: A vector of length 2 containing the lower and upper bounds
+#'  of the 95% confidence interval for the difference in Positive Prediction
+#'  Rate
 #' @export
 
 eval_cond_stats_parity <- function(data, outcome, group,
-                                                 group2, condition, probs,
-                                                 cutoff = 0.5, confint = TRUE,
-                                                 bootstraps = 1000, message = TRUE,
-                                                 digits = 2) {
+                                   group2, condition, probs,
+                                   cutoff = 0.5, confint = TRUE,
+                                   bootstraps = 1000, message = TRUE,
+                                   digits = 2) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
@@ -358,7 +365,7 @@ eval_cond_stats_parity <- function(data, outcome, group,
       cat("Conditional on", group2, condition, ":\n")
       return(c(
         list(condition = paste(group2, condition)),
-        check_statistical_parity(
+        eval_stats_parity(
           data = subset_data, outcome = outcome, group = group, probs = probs,
           cutoff = cutoff, confint = confint, bootstraps = bootstraps,
           digits = digits, message = message
@@ -374,7 +381,7 @@ eval_cond_stats_parity <- function(data, outcome, group,
       cat("Conditional on", group2, "=", condition, ":\n")
       return(c(
         list(condition = paste(group2, condition)),
-        check_statistical_parity(
+        eval_stats_parity(
           data = subset_data, outcome = outcome, group = group, probs = probs,
           cutoff = cutoff, confint = confint, bootstraps = bootstraps,
           digits = digits, message = message
@@ -400,13 +407,14 @@ eval_cond_stats_parity <- function(data, outcome, group,
 #'  - PPV_Group2: Positive Predictive Value for the second group
 #'  - PPV_Diff: Difference in Positive Predictive Value
 #'  If confidence intervals are computed (`confint = TRUE`):
-#'  - PPV_Diff_CI: 95% confidence interval for the difference in Positive
-#' Predictive Value
+#'  - PPV_Diff_CI: A vector of length 2 containing the lower and upper bounds
+#'  of the 95% confidence interval for the difference in Positive Predictive
+#'  Value
 #' @export
 
 eval_pred_parity <- function(data, outcome, group, probs, cutoff = 0.5,
-                                    confint = TRUE, bootstraps = 1000,
-                                    digits = 2, message = TRUE) {
+                             confint = TRUE, bootstraps = 1000,
+                             digits = 2, message = TRUE) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
@@ -415,7 +423,7 @@ eval_pred_parity <- function(data, outcome, group, probs, cutoff = 0.5,
 
   ppv <- get_ppv(
     data = data, outcome = outcome, group = group, probs = probs,
-    cutoff = cutoff
+    cutoff = cutoff, digits = digits
   )
   ppv$PPV_Diff <- ppv[[1]] - ppv[[2]]
 
@@ -439,8 +447,8 @@ eval_pred_parity <- function(data, outcome, group, probs, cutoff = 0.5,
     })
 
     ppv$PPV_Diff_CI <- c(
-      ppv$PPV_Diff - 1.96 * sd(unlist(se)),
-      ppv$PPV_Diff + 1.96 * sd(unlist(se))
+      round(ppv$PPV_Diff - 1.96 * sd(unlist(se)), digits),
+      round(ppv$PPV_Diff + 1.96 * sd(unlist(se)), digits)
     )
   }
 
@@ -488,13 +496,13 @@ eval_pred_parity <- function(data, outcome, group, probs, cutoff = 0.5,
 #' - FPR_Group2: False Positive Rate for the second group
 #' - FPR_Diff: Difference in False Positive Rate
 #' If confidence intervals are computed (`confint = TRUE`):
-#' - FPR_Diff_CI: 95% confidence interval for the difference in False Positive
-#' Rate
+#' - FPR_Diff_CI: A vector of length 2 containing the lower and upper bounds
+#' of the 95% confidence interval for the difference in False Positive Rate
 #' @export
 
 eval_pred_equality <- function(data, outcome, group, probs, cutoff = 0.5,
-                                      confint = TRUE, bootstraps = 1000,
-                                      digits = 2, message = TRUE) {
+                               confint = TRUE, bootstraps = 1000,
+                               digits = 2, message = TRUE) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
@@ -529,8 +537,8 @@ eval_pred_equality <- function(data, outcome, group, probs, cutoff = 0.5,
     })
 
     fpr$FPR_Diff_CI <- c(
-      fpr$FPR_Diff - 1.96 * sd(unlist(se)),
-      fpr$FPR_Diff + 1.96 * sd(unlist(se))
+      round(fpr$FPR_Diff - 1.96 * sd(unlist(se)), digits),
+      round(fpr$FPR_Diff + 1.96 * sd(unlist(se)), digits)
     )
   }
 
@@ -577,19 +585,21 @@ eval_pred_equality <- function(data, outcome, group, probs, cutoff = 0.5,
 #' - PPV_Group1: Positive Predictive Value for the first group
 #' - PPV_Group2: Positive Predictive Value for the second group
 #' - PPV_Diff: Difference in Positive Predictive Value
-#' - npvGroup1: Negative Predictive Value for the first group
-#' - npvGroup2: Negative Predictive Value for the second group
-#' - npvDiff: Difference in Negative Predictive Value
+#' - NPV_Group1: Negative Predictive Value for the first group
+#' - NPV_Group2: Negative Predictive Value for the second group
+#' - NPV_Diff: Difference in Negative Predictive Value
 #' If confidence intervals are computed (`confint = TRUE`):
-#' - PPV_Diff_CI: 95% confidence interval for the difference in Positive
-#' Predictive Value
-#' - npvDiff_CI: 95% confidence interval for the difference in Negative
-#' Predictive Value
+#' - PPV_Diff_CI: A vector of length 2 containing the lower and upper bounds
+#' of the 95% confidence interval for the difference in Positive Predictive
+#' Value
+#' - NPV_Diff_CI: A vector of length 2 containing the lower and upper bounds
+#' of the 95% confidence interval for the difference in Negative Predictive
+#' Value
 #' @export
 
 eval_cond_acc_equality <- function(data, outcome, group, probs, cutoff = 0.5,
-                                              confint = TRUE, bootstraps = 1000,
-                             digits = 2, message = TRUE) {
+                                   confint = TRUE, bootstraps = 1000,
+                                   digits = 2, message = TRUE) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
@@ -604,11 +614,11 @@ eval_cond_acc_equality <- function(data, outcome, group, probs, cutoff = 0.5,
 
   ppv <- get_ppv(
     data = data, outcome = outcome, group = group, probs = probs,
-    cutoff = cutoff
+    cutoff = cutoff, digits = digits
   )
   npv <- get_npv(
     data = data, outcome = outcome, group = group, probs = probs,
-    cutoff = cutoff
+    cutoff = cutoff, digits = digits
   )
   ppv$PPV_Diff <- ppv[[1]] - ppv[[2]]
   npv$NPV_Diff <- npv[[1]] - npv[[2]]
@@ -618,10 +628,10 @@ eval_cond_acc_equality <- function(data, outcome, group, probs, cutoff = 0.5,
     se <- lapply(1:bootstraps, function(j) {
       # bootstrap within each group
       group1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
-                       replace = TRUE
+        replace = TRUE
       )
       group2 <- sample(which(data[[group]] == unique(data[[group]])[2]),
-                       replace = TRUE
+        replace = TRUE
       )
       data_boot <- rbind(data[group1, ], data[group2, ])
 
@@ -638,12 +648,24 @@ eval_cond_acc_equality <- function(data, outcome, group, probs, cutoff = 0.5,
     })
 
     ppv$PPV_Diff_CI <- c(
-      ppv$PPV_Diff - 1.96 * sd(unlist(lapply(se, function(x) x$se_ppv))),
-      ppv$PPV_Diff + 1.96 * sd(unlist(lapply(se, function(x) x$se_ppv)))
+      round(
+        ppv$PPV_Diff - 1.96 * sd(unlist(lapply(se, function(x) x$se_ppv))),
+        digits
+      ),
+      round(
+        ppv$PPV_Diff + 1.96 * sd(unlist(lapply(se, function(x) x$se_ppv))),
+        digits
+      )
     )
     npv$NPV_Diff_CI <- c(
-      npv$NPV_Diff - 1.96 * sd(unlist(lapply(se, function(x) x$se_npv))),
-      npv$NPV_Diff + 1.96 * sd(unlist(lapply(se, function(x) x$se_npv)))
+      round(
+        npv$NPV_Diff - 1.96 * sd(unlist(lapply(se, function(x) x$se_npv))),
+        digits
+      ),
+      round(
+        npv$NPV_Diff + 1.96 * sd(unlist(lapply(se, function(x) x$se_npv))),
+        digits
+      )
     )
   }
 
@@ -681,7 +703,7 @@ eval_cond_acc_equality <- function(data, outcome, group, probs, cutoff = 0.5,
       )
 
       if (ppv$PPV_Diff_CI[1] > 0 | ppv$PPV_Diff_CI[2] < 0 |
-          npv$NPV_Diff_CI[1] > 0 | npv$NPV_Diff_CI[2] < 0) {
+        npv$NPV_Diff_CI[1] > 0 | npv$NPV_Diff_CI[2] < 0) {
         cat("There is enough evidence that the model does not satisfy
             conditional use accuracy equality.\n")
       } else {
@@ -709,7 +731,8 @@ eval_cond_acc_equality <- function(data, outcome, group, probs, cutoff = 0.5,
 #' - Accuracy for Group 2
 #' - Difference in accuracy
 #' If confidence intervals are computed (`confint = TRUE`):
-#' - 95% CI for the difference in accuracy
+#' - A vector of length 2 containing the lower and upper bounds of the 95%
+#' confidence interval for the difference in accuracy
 #' @export
 
 eval_acc_parity <- function(data, outcome, group, probs, cutoff = 0.5,
@@ -723,7 +746,7 @@ eval_acc_parity <- function(data, outcome, group, probs, cutoff = 0.5,
 
   acc <- get_acc(
     data = data, outcome = outcome, group = group, probs = probs,
-    cutoff = cutoff
+    digits = digits, cutoff = cutoff
   )
 
   acc$ACC_Diff <- acc[[1]] - acc[[2]]
@@ -732,10 +755,10 @@ eval_acc_parity <- function(data, outcome, group, probs, cutoff = 0.5,
     se <- lapply(1:bootstraps, function(j) {
       # bootstrap within each group
       group1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
-                       replace = TRUE
+        replace = TRUE
       )
       group2 <- sample(which(data[[group]] == unique(data[[group]])[2]),
-                       replace = TRUE
+        replace = TRUE
       )
       data_boot <- rbind(data[group1, ], data[group2, ])
 
@@ -746,8 +769,8 @@ eval_acc_parity <- function(data, outcome, group, probs, cutoff = 0.5,
       acc[[1]] - acc[[2]]
     })
     acc$ACC_Diff_CI <- c(
-      acc$ACC_Diff - 1.96 * sd(unlist(se)),
-      acc$ACC_Diff + 1.96 * sd(unlist(se))
+      round(acc$ACC_Diff - 1.96 * sd(unlist(se)), digits),
+      round(acc$ACC_Diff + 1.96 * sd(unlist(se)), digits)
     )
   }
 
@@ -785,7 +808,6 @@ eval_acc_parity <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @param outcome Name of the outcome variable
 #' @param group Name of the sensitive attribute
 #' @param probs Predicted probabilities
-#' @param cutoff Cutoff value for the predicted probabilities
 #' @param confint Logical indicating whether to calculate confidence intervals
 #' @param bootstraps Number of bootstraps to use for confidence intervals
 #' @param digits Number of digits to round the results to, default is 2
@@ -795,11 +817,12 @@ eval_acc_parity <- function(data, outcome, group, probs, cutoff = 0.5,
 #' - Brier Score for Group 2
 #' - Difference in Brier Score
 #' If confidence intervals are computed (`confint = TRUE`):
-#' - 95% CI for the difference in Brier Score
+#' - A vector of length 2 containing the lower and upper bounds of the 95%
+#' confidence interval for the difference in Brier Score
 #' @export
 
-eval_bs_parity <- function(data, outcome, group, probs, cutoff = 0.5,
-                               confint = TRUE, bootstraps = 1000,
+eval_bs_parity <- function(data, outcome, group, probs,
+                           confint = TRUE, bootstraps = 1000,
                            digits = 2, message = TRUE) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
@@ -809,7 +832,7 @@ eval_bs_parity <- function(data, outcome, group, probs, cutoff = 0.5,
 
   bs <- get_brier_score(
     data = data, outcome = outcome, group = group, probs = probs,
-    cutoff = cutoff
+    digits = digits
   )
 
   bs$BS_Diff <- bs[[1]] - bs[[2]]
@@ -818,22 +841,22 @@ eval_bs_parity <- function(data, outcome, group, probs, cutoff = 0.5,
     se <- lapply(1:bootstraps, function(j) {
       # bootstrap within each group
       group1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
-                       replace = TRUE
+        replace = TRUE
       )
       group2 <- sample(which(data[[group]] == unique(data[[group]])[2]),
-                       replace = TRUE
+        replace = TRUE
       )
       data_boot <- rbind(data[group1, ], data[group2, ])
 
       bs <- get_brier_score(
         data = data_boot, outcome = outcome, group = group,
-        probs = probs, cutoff = cutoff
+        probs = probs
       )
       bs[[1]] - bs[[2]]
     })
     bs$BS_Diff_CI <- c(
-      bs$BS_Diff - 1.96 * sd(unlist(se)),
-      bs$BS_Diff + 1.96 * sd(unlist(se))
+      round(bs$BS_Diff - 1.96 * sd(unlist(se)), digits),
+      round(bs$BS_Diff + 1.96 * sd(unlist(se)), digits)
     )
   }
 
@@ -882,12 +905,13 @@ eval_bs_parity <- function(data, outcome, group, probs, cutoff = 0.5,
 #' - False Negative / False Positive ratio for Group 2
 #' - Difference in False Negative / False Positive ratio
 #' If confidence intervals are computed (`confint = TRUE`):
-#' - 95% CI for the difference in False Negative / False Positive ratio
+#' - A vector of length 2 containing the lower and upper bounds of the 95%
+#' confidence interval for the difference in False Negative / False Positive ratio
 #' @export
 
 eval_treatment_equality <- function(data, outcome, group, probs, cutoff = 0.5,
-                               confint = TRUE, bootstraps = 1000,
-                               digits = 2, message = TRUE) {
+                                    confint = TRUE, bootstraps = 1000,
+                                    digits = 2, message = TRUE) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
@@ -896,7 +920,7 @@ eval_treatment_equality <- function(data, outcome, group, probs, cutoff = 0.5,
 
   err_ratio <- get_err_ratio(
     data = data, outcome = outcome, group = group, probs = probs,
-    cutoff = cutoff
+    cutoff = cutoff, digits = digits
   )
 
   err_ratio$"FN/FP_Diff" <- err_ratio[[1]] - err_ratio[[2]]
@@ -905,10 +929,10 @@ eval_treatment_equality <- function(data, outcome, group, probs, cutoff = 0.5,
     se <- lapply(1:bootstraps, function(j) {
       # bootstrap within each group
       group1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
-                       replace = TRUE
+        replace = TRUE
       )
       group2 <- sample(which(data[[group]] == unique(data[[group]])[2]),
-                       replace = TRUE
+        replace = TRUE
       )
       data_boot <- rbind(data[group1, ], data[group2, ])
 
@@ -919,8 +943,8 @@ eval_treatment_equality <- function(data, outcome, group, probs, cutoff = 0.5,
       err_ratio[[1]] - err_ratio[[2]]
     })
     err_ratio$"FN/FP_Diff_CI" <- c(
-      err_ratio$"FN/FP_Diff" - 1.96 * sd(unlist(se)),
-      err_ratio$"FN/FP_Diff" + 1.96 * sd(unlist(se))
+      round(err_ratio$"FN/FP_Diff" - 1.96 * sd(unlist(se)), digits),
+      round(err_ratio$"FN/FP_Diff" + 1.96 * sd(unlist(se)), digits)
     )
   }
 
@@ -933,7 +957,10 @@ eval_treatment_equality <- function(data, outcome, group, probs, cutoff = 0.5,
       "FN/FP ratio for Group", unique(data[[group]])[2], "is",
       round(err_ratio[[2]], digits), "\n"
     )
-    cat("Difference in FN/FP ratio is", round(err_ratio$"FN/FP_Diff", digits), "\n")
+    cat(
+      "Difference in FN/FP ratio is", round(err_ratio$"FN/FP_Diff", digits),
+      "\n"
+    )
     if (confint) {
       cat(
         "95% CI for the difference in FN/FP ratio is",
@@ -959,7 +986,6 @@ eval_treatment_equality <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @param outcome Name of the outcome variable
 #' @param group Name of the sensitive attribute
 #' @param probs Predicted probabilities
-#' @param cutoff Cutoff value for the predicted probabilities
 #' @param confint Logical indicating whether to calculate confidence intervals
 #' @param bootstraps Number of bootstraps to use for confidence intervals
 #' @param digits Number of digits to round the results to, default is 2
@@ -969,12 +995,13 @@ eval_treatment_equality <- function(data, outcome, group, probs, cutoff = 0.5,
 #' - Average predicted probability for Group 2
 #' - Difference in average predicted probability
 #' If confidence intervals are computed (`confint = TRUE`):
-#' - 95% CI for the difference in average predicted probability
+#' - A vector of length 2 containing the lower and upper bounds of the 95%
+#' confidence interval for the difference in average predicted probability
 #' @export
 
-eval_pos_class_bal <- function(data, outcome, group, probs, cutoff = 0.5,
-                             confint = TRUE, bootstraps = 1000,
-                             digits = 2, message = TRUE) {
+eval_pos_class_bal <- function(data, outcome, group, probs,
+                               confint = TRUE, bootstraps = 1000,
+                               digits = 2, message = TRUE) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
@@ -983,7 +1010,7 @@ eval_pos_class_bal <- function(data, outcome, group, probs, cutoff = 0.5,
 
   pos_data <- data[data[[outcome]] == 1, ]
   avg_prob <- get_avg_prob(
-    data = pos_data, group = group, probs = probs
+    data = pos_data, group = group, probs = probs, digits = digits
   )
 
   avg_prob$Avg_Prob_Diff <- avg_prob[[1]] - avg_prob[[2]]
@@ -992,10 +1019,10 @@ eval_pos_class_bal <- function(data, outcome, group, probs, cutoff = 0.5,
     se <- lapply(1:bootstraps, function(j) {
       # bootstrap within each group
       group1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
-                       replace = TRUE
+        replace = TRUE
       )
       group2 <- sample(which(data[[group]] == unique(data[[group]])[2]),
-                       replace = TRUE
+        replace = TRUE
       )
       data_boot <- rbind(data[group1, ], data[group2, ])
       pos_data_boot <- data_boot[data_boot[[outcome]] == 1, ]
@@ -1005,8 +1032,8 @@ eval_pos_class_bal <- function(data, outcome, group, probs, cutoff = 0.5,
       avg_prob_boot[[1]] - avg_prob_boot[[2]]
     })
     avg_prob$"Avg_Prob_Diff_CI" <- c(
-      avg_prob$"Avg_Prob_Diff" - 1.96 * sd(unlist(se)),
-      avg_prob$"Avg_Prob_Diff" + 1.96 * sd(unlist(se))
+      round(avg_prob$"Avg_Prob_Diff" - 1.96 * sd(unlist(se)), digits),
+      round(avg_prob$"Avg_Prob_Diff" + 1.96 * sd(unlist(se)), digits)
     )
   }
 
@@ -1019,8 +1046,10 @@ eval_pos_class_bal <- function(data, outcome, group, probs, cutoff = 0.5,
       "Average predicted probability for Group", unique(data[[group]])[2], "is",
       round(avg_prob[[2]], digits), "\n"
     )
-    cat("Difference in average predicted probability is",
-        round(avg_prob$"Avg_Prob_Diff", digits), "\n")
+    cat(
+      "Difference in average predicted probability is",
+      round(avg_prob$"Avg_Prob_Diff", digits), "\n"
+    )
     if (confint) {
       cat(
         "95% CI for the difference in average predicted probability is",
@@ -1028,12 +1057,12 @@ eval_pos_class_bal <- function(data, outcome, group, probs, cutoff = 0.5,
         round(avg_prob$"Avg_Prob_Diff_CI"[2], digits), "\n"
       )
       if (avg_prob$"Avg_Prob_Diff_CI"[1] > 0 |
-          avg_prob$"Avg_Prob_Diff_CI"[2] < 0) {
+        avg_prob$"Avg_Prob_Diff_CI"[2] < 0) {
         cat("There is enough evidence that the model does not satisfy
-            treatment equality.\n")
+            balance for positive class.\n")
       } else {
         cat("There is not enough evidence that the model does not satisfy
-            treatment equality.\n")
+            balance for positive class.\n")
       }
     }
   }
@@ -1056,12 +1085,13 @@ eval_pos_class_bal <- function(data, outcome, group, probs, cutoff = 0.5,
 #' - Average predicted probability for Group 2
 #' - Difference in average predicted probability
 #' If confidence intervals are computed (`confint = TRUE`):
-#' - 95% CI for the difference in average predicted probability
+#' - A vector of length 2 containing the lower and upper bounds of the 95%
+#' confidence interval for the difference in average predicted probability
 #' @export
 
 eval_neg_class_bal <- function(data, outcome, group, probs,
-                             confint = TRUE, bootstraps = 1000,
-                             digits = 2, message = TRUE) {
+                               confint = TRUE, bootstraps = 1000,
+                               digits = 2, message = TRUE) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
@@ -1070,7 +1100,7 @@ eval_neg_class_bal <- function(data, outcome, group, probs,
 
   neg_data <- data[data[[outcome]] == 0, ]
   avg_prob <- get_avg_prob(
-    data = neg_data, group = group, probs = probs
+    data = neg_data, group = group, probs = probs, digits = digits
   )
 
   avg_prob$Avg_Prob_Diff <- avg_prob[[1]] - avg_prob[[2]]
@@ -1079,10 +1109,10 @@ eval_neg_class_bal <- function(data, outcome, group, probs,
     se <- lapply(1:bootstraps, function(j) {
       # bootstrap within each group
       group1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
-                       replace = TRUE
+        replace = TRUE
       )
       group2 <- sample(which(data[[group]] == unique(data[[group]])[2]),
-                       replace = TRUE
+        replace = TRUE
       )
       data_boot <- rbind(data[group1, ], data[group2, ])
       neg_data_boot <- data_boot[data_boot[[outcome]] == 0, ]
@@ -1092,8 +1122,8 @@ eval_neg_class_bal <- function(data, outcome, group, probs,
       avg_prob_boot[[1]] - avg_prob_boot[[2]]
     })
     avg_prob$"Avg_Prob_Diff_CI" <- c(
-      avg_prob$"Avg_Prob_Diff" - 1.96 * sd(unlist(se)),
-      avg_prob$"Avg_Prob_Diff" + 1.96 * sd(unlist(se))
+      round(avg_prob$"Avg_Prob_Diff" - 1.96 * sd(unlist(se)), digits),
+      round(avg_prob$"Avg_Prob_Diff" + 1.96 * sd(unlist(se)), digits)
     )
   }
 
@@ -1106,8 +1136,10 @@ eval_neg_class_bal <- function(data, outcome, group, probs,
       "Average predicted probability for Group", unique(data[[group]])[2], "is",
       round(avg_prob[[2]], digits), "\n"
     )
-    cat("Difference in average predicted probability is",
-        round(avg_prob$"Avg_Prob_Diff", digits), "\n")
+    cat(
+      "Difference in average predicted probability is",
+      round(avg_prob$"Avg_Prob_Diff", digits), "\n"
+    )
     if (confint) {
       cat(
         "95% CI for the difference in average predicted probability is",
@@ -1115,12 +1147,12 @@ eval_neg_class_bal <- function(data, outcome, group, probs,
         round(avg_prob$"Avg_Prob_Diff_CI"[2], digits), "\n"
       )
       if (avg_prob$"Avg_Prob_Diff_CI"[1] > 0 |
-          avg_prob$"Avg_Prob_Diff_CI"[2] < 0) {
+        avg_prob$"Avg_Prob_Diff_CI"[2] < 0) {
         cat("There is enough evidence that the model does not satisfy
-            treatment equality.\n")
+            balance for negative class.\n")
       } else {
         cat("There is not enough evidence that the model does not satisfy
-            treatment equality.\n")
+            balance for negative class.\n")
       }
     }
   }
