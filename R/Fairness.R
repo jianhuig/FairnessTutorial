@@ -296,7 +296,7 @@ eval_stats_parity <- function(data, outcome, group, probs, cutoff = 0.5,
     cat("Difference in PPR is", round(ppr$PPR_Diff, digits), "\n")
     if (confint) {
       cat(
-        "95% CI for the difference in TPR is",
+        "95% CI for the difference in PPR is",
         round(ppr$PPR_Diff_CI[1], digits), "to",
         round(ppr$PPR_Diff_CI[2], digits), "\n"
       )
