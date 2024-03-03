@@ -60,8 +60,25 @@ eval_max_min_diff <- function(data, outcome, group, probs, get_metric, cutoff = 
       round(max_min_diff + 1.96 * sd(unlist(se)), digits)
     )
   }
-
-  # Add in messages!!!
+  if (message) {
+    cat(
+      "Maximum minimum difference for the model is",
+      max_min_diff[[1]], "\n"
+    )
+    if (confint) {
+      cat(
+        "95% CI for the maximum minimum difference is",
+        max_min_diff$MAX_MIN_DIFF_CI[1], "to",
+        max_min_diff$MAX_MIN_DIFF_CI[2], "\n"
+      )
+      if (max_min_diff$MAX_MIN_DIFF_CI[1] > 0 | max_min_diff$MAX_MIN_DIFF_CI[2] < 0) {
+        cat("There is evidence that model does not satisfy maximum minimum difference.\n")
+      } else {
+        cat("There is not enough evidence that the model does not satisfy
+            maximum minimum difference.\n")
+      }
+    }
+  }
   return(max_min_diff)
 }
 
@@ -126,7 +143,25 @@ eval_max_min_ratio <- function(data, outcome, group, probs, get_metric, cutoff =
     )
   }
 
-  # Add in messages!!!
+  if (message) {
+    cat(
+      "Maximum minimum ratio for the model is",
+      max_min_diff[[1]], "\n"
+    )
+    if (confint) {
+      cat(
+        "95% CI for the maximum minimum ratio is",
+        max_min_ratio$MAX_MIN_RATIO_CI[1], "to",
+        max_min_ratio$MAX_MIN_RATIO_CI[2], "\n"
+      )
+      if (max_min_ratio$MAX_MIN_RATIO_CI[1] > 0 | max_min_ratio$MAX_MIN_RATIO_CI[2] < 0) {
+        cat("There is evidence that model does not satisfy maximum minimum ratio\n")
+      } else {
+        cat("There is not enough evidence that the model does not satisfy
+            maximum minimum ratio\n")
+      }
+    }
+  }
   return(max_min_ratio)
 }
 
@@ -190,7 +225,25 @@ eval_max_abs_diff <- function(data, outcome, group, probs, get_metric, cutoff = 
     )
   }
 
-  # Add in messages!!!
+  if (message) {
+    cat(
+      "Maximum absolute difference for the model is",
+      max_abs_diff[[1]], "\n"
+    )
+    if (confint) {
+      cat(
+        "95% CI for the maximum absolute difference is",
+        max_abs_diff$MAX_ABS_DIFF_CI[1], "to",
+        max_abs_diff$MAX_ABS_DIFF_CI[2], "\n"
+      )
+      if (max_abs_diff$MAX_ABS_DIFF_CI[1] > 0 | max_abs_diff$MAX_ABS_DIFF_CI[2] < 0) {
+        cat("There is evidence that model does not satisfy maximum absolute difference\n")
+      } else {
+        cat("There is not enough evidence that the model does not satisfy
+            maximum absolute difference\n")
+      }
+    }
+  }
   return(max_abs_diff)
 }
 
@@ -254,7 +307,25 @@ eval_mean_abs_dev <- function(data, outcome, group, probs, get_metric, cutoff = 
     )
   }
 
-  # Add in messages!!!
+  if (message) {
+    cat(
+      "Mean absolute deviation for the model is",
+      mean_abs_dev[[1]], "\n"
+    )
+    if (confint) {
+      cat(
+        "95% CI for the mean absolute deviation is",
+        mean_abs_dev$MEAN_ABS_DEV_CI[1], "to",
+        mean_abs_dev$MEAN_ABS_DEV_CI[2], "\n"
+      )
+      if (mean_abs_dev$MEAN_ABS_DEV_CI[1] > 0 | mean_abs_dev$MEAN_ABS_DEV_CI[2] < 0) {
+        cat("There is evidence that model does not satisfy mean absolute deviation\n")
+      } else {
+        cat("There is not enough evidence that the model does not satisfy
+            mean absolute deviation\n")
+      }
+    }
+  }
   return(mean_abs_dev)
 }
 
@@ -318,7 +389,25 @@ eval_variance <- function(data, outcome, group, probs, get_metric, cutoff = 0.5,
     )
   }
 
-  # Add in messages!!!
+  if (message) {
+    cat(
+      "Variance for the model is",
+      variance[[1]], "\n"
+    )
+    if (confint) {
+      cat(
+        "95% CI for the variance is",
+        variance$VAR_CI[1], "to",
+        variance$VAR_CI[2], "\n"
+      )
+      if (variance$VAR_CI[1] > 0 | variance$VAR_CI[2] < 0) {
+        cat("There is evidence that model does not satisfy variance\n")
+      } else {
+        cat("There is not enough evidence that the model does not satisfy
+            variance\n")
+      }
+    }
+  }
   return(variance)
 }
 
@@ -395,6 +484,24 @@ eval_generalized_entropy_index <- function(data, outcome, group, probs, get_metr
     )
   }
 
-  # Add in messages!!!
+  if (message) {
+    cat(
+      "Generalized entropy index for the model is",
+      generalized_entropy_index[[1]], "\n"
+    )
+    if (confint) {
+      cat(
+        "95% CI for the generalized entropy index is",
+        generalized_entropy_index$GEN_ENTROPY_IND_CI[1], "to",
+        generalized_entropy_index$GEN_ENTROPY_IND_CI[2], "\n"
+      )
+      if (generalized_entropy_index$GEN_ENTROPY_IND_CI[1] > 0 | generalized_entropy_index$GEN_ENTROPY_IND_CI[2] < 0) {
+        cat("There is evidence that model does not satisfy generalized entropy index\n")
+      } else {
+        cat("There is not enough evidence that the model does not satisfy
+            generalized entropy index\n")
+      }
+    }
+  }
   return(generalized_entropy_index)
 }
