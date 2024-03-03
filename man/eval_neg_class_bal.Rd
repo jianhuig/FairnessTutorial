@@ -40,7 +40,8 @@ A list containing the following elements:
 \item Average predicted probability for Group 2
 \item Difference in average predicted probability
 If confidence intervals are computed (\code{confint = TRUE}):
-\item 95\% CI for the difference in average predicted probability
+\item A vector of length 2 containing the lower and upper bounds of the 95\%
+confidence interval for the difference in average predicted probability
 }
 }
 \description{

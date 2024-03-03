@@ -20,3 +20,10 @@ logit <- function(p) {
 expit <- function(x) {
   1 / (1 + exp(-x))
 }
+
+#' Define resample by group function
+#' @param group_data a dataframe object
+#' @noRd
+resample_group <- function(group_data) {
+  sample(group_data, size = length(group_data), replace = TRUE)
+}
