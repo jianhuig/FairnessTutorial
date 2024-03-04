@@ -41,9 +41,9 @@ eval_max_min_diff <- function(data, outcome, group, probs, cutoff = 0.5,
     boot_metrics <- replicate(bootstraps, {
       resampled_data <- # Resample data within each group
         resampled_data <- data %>%
-        group_by(!!sym(group)) %>%
-        dplyr::sample_n(n(), replace = TRUE) %>%
-        ungroup() %>%
+        dplyr::group_by(!!dplyr::sym(group)) %>%
+        dplyr::sample_n(dplyr::n(), replace = TRUE) %>%
+        dplyr::ungroup() %>%
         data.frame() # Important: ungroup after sampling
       boot_metric <- get_all_metrics(resampled_data, outcome, group, probs,
                                      cutoff, digits)
@@ -52,7 +52,7 @@ eval_max_min_diff <- function(data, outcome, group, probs, cutoff = 0.5,
 
     # Calculate the confidence intervals
     CI_bounds <- apply(boot_metrics, 1, function(x)
-      quantile(x, c(0.025, 0.975), na.rm = TRUE))
+      stats::quantile(x, c(0.025, 0.975), na.rm = TRUE))
     metric$`95% CI` <- apply(CI_bounds, 2, function(x)
       paste("[", round(x[1], digits), ",", round(x[2], digits), "]", sep = ""))
   }
