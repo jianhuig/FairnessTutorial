@@ -1,81 +1,21 @@
 ---
-  title: "Preprocessing Data"
+title: "Preprocessing Data"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Preprocessing Data}
-%\VignetteEngine{knitr::rmarkdown}
-%\VignetteEncoding{UTF-8}
+  %\VignetteIndexEntry{my-vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
-  
-  ```{r, include = FALSE}
+
+```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
 ```
 
-```{r setup, message=FALSE, warning=FALSE, eval=}
+```{r setup}
 library(FairnessTutorial)
-library(dplyr)
-library(corrplot)
-library(randomForest)
-library(pROC)
-library(SpecsVerification)
 
 data("mimic")
-```
-
-# Missing Data
-
-```{r}
-# Calculate the number of missing values per column
-missing_values <- sapply(mimic, function(x) sum(is.na(x)))
-
-# Calculate the percentage of missing values per column
-missing_values_percentage <- sapply(mimic, function(x) sum(is.na(x)) / length(x) * 100)
-
-# Combine the results into a data frame for easy viewing
-missing_data_summary <- data.frame(Number_of_Missing_Values = missing_values, 
-                                   Percentage = missing_values_percentage)
-
-# Print the summary
-print(missing_data_summary)
-
-# remove columns with more than 10% missing data and impute the rest with median
-# Identify columns with more than 10% missing values
-columns_to_remove <- names(missing_values_percentage[missing_values_percentage > 10])
-
-# Remove these columns
-mimic <- select(mimic, -one_of(columns_to_remove))
-
-# Impute remaining missing values with median
-mimic<- mimic %>% mutate(across(where(~any(is.na(.))), ~ifelse(is.na(.), median(., na.rm = TRUE), .)))
-
-# Check if there are any missing values left
-remaining_missing_values <- sum(sapply(mimic, function(x) sum(is.na(x))))
-remaining_missing_values
-
-# Identify columns that have only one unique value
-cols_with_one_value <- sapply(mimic, function(x) length(unique(x)) == 1)
-
-# Subset the dataframe to remove these columns
-mimic <- mimic[, !cols_with_one_value]
-```
-
-# Model Building
-
-```{r}
-# Remove columns that are highly correlated with the outcome variable
-corrplot(cor(select_if(mimic, is.numeric)), method = "color", tl.cex = 0.5)
-mimic <- mimic %>% 
-  select(-c("hosp_exp_flg", "icu_exp_flg", "mort_day_censored", "censor_flg"))
-
-# Use 700 labels to train the mimic
-train_data <- mimic %>% filter(row_number() <= 700)
-# Fit a random forest model
-rf_model <- randomForest(factor(day_28_flg) ~ ., data = train_data, seed = 123)
-
-# Test the model on the remaining data
-test_data <- mimic %>% filter(row_number() > 700)
-test_data$pred <- predict(rf_model, newdata = test_data, type = "prob")[,2]
 ```
