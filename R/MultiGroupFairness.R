@@ -2,85 +2,65 @@
 # Customized Multi-Group Fairness Function Implementation
 # -----------------------------------------------------------------------------
 
-#' Examine maximum minimum difference of a model
-#' @param data Data frame containing the outcome, predicted outcome, and
-#' group
-#' @param outcome Name of the outcome variable, it must be binary
-#' @param group Name of the group
-#' @param probs Name of the predicted outcome variable
-#' @param get_metric Function of the model performance metric used to compute multi-group metrics
-#' The input should take in: data, outcome, group, probs, cutoff, and digits
-#' The output should be a list containing the following elements:
-#' - Name of each group
-#' - Calculated metric for each group
-#' @param cutoff Threshold for the predicted outcome, default is 0.5
-#' @param confint Whether to compute 95% confidence interval, default is TRUE
-#' @param bootstraps Number of bootstrap samples, default is 1000
-#' @param digits Number of digits to round the results to, default is 2
-#' @param message Whether to print the results, default is TRUE
-#' @return A list containing the following elements:
-#' - max_min_diff: maximum minimum metric difference for the model
-#' If confidence intervals are computed (`confint = TRUE`):
-#' - MAX_MIN_DIFF_CI: A vector of length 2 providing the lower and upper bounds of
-#' the 95% confidence interval for the max-min metric difference
+#' Examine Maximum-Minimum Difference of a Model
+#'
+#' This function evaluates the maximum and minimum differences in model
+#'  performance metrics across different groups.
+#'
+#' @param data Data frame containing the outcome, predicted outcome, and group.
+#' @param outcome Name of the outcome variable, which must be binary.
+#' @param group Name of the group variable.
+#' @param probs Name of the predicted outcome variable.
+#' @param cutoff Threshold for the predicted outcome, default is 0.5.
+#' @param confint Whether to compute a 95% confidence interval, default is TRUE.
+#' @param bootstraps Number of bootstrap samples, default is 1000.
+#' @param digits Number of digits to round the results to, default is 2.
+#'
+#' @return A data frame containing the following elements:
+#'   - Metric: The names of the metrics calculated.
+#'   - Values for each group.
+#'   - Max-Min: The maximum minus minimum metric difference for the model.
+#'   If confidence intervals are computed (`confint = TRUE`):
+#'   - 95% CI: A string providing the lower and upper bounds of the 95%
+#'   confidence interval for the max-min metric difference.
+#'
+#' @import dplyr
+#' @importFrom magrittr %>%
+#' @importFrom stats quantile
 #' @export
 
-eval_max_min_diff <- function(data, outcome, group, probs, get_metric, cutoff = 0.5,
-                              confint = TRUE, bootstraps = 1000,
-                              digits = 2, message = TRUE){
-  metric <- get_metric(
-    data, outcome, group, probs, cutoff, digits
-  )
+eval_max_min_diff <- function(data, outcome, group, probs, cutoff = 0.5,
+                              confint = TRUE, bootstraps = 1000, digits = 2) {
+  metric <- get_all_metrics(data, outcome, group, probs, cutoff, digits)
 
-  # Check that the length of metric matches the number of unique groups
-  unique_groups <- unique(data[[group]])
-  if (!(length(unique_groups) == length(metric))) {
-    stop("Number of metrics don't match the number of groups")
-  }
+  # Calculate Max-Min difference for each metric
+  metric$`Max-Min` <- apply(metric[,-1], 1, function(x) max(x) - min(x))
 
-  unlisted_metric <- unlist(metric)
-  max_min_diff <- round(max(unlisted_metric) - min(unlisted_metric), digits)
   # Calculate confidence interval
   if (confint) {
-    se <- lapply(1:bootstraps, function(j) {
-      # bootstrap within each group
-      resampled_data <- data %>%
-        group_by(!!group) %>%
-        sapply(resample_group)
+    boot_metrics <- replicate(bootstraps, {
+      resampled_data <- # Resample data within each group
+        resampled_data <- data %>%
+        group_by(!!sym(group)) %>%
+        dplyr::sample_n(n(), replace = TRUE) %>%
+        ungroup() %>%
+        data.frame() # Important: ungroup after sampling
+      boot_metric <- get_all_metrics(resampled_data, outcome, group, probs,
+                                     cutoff, digits)
+      apply(boot_metric[,-1], 1, function(x) max(x) - min(x))
+    }, simplify = "array")
 
-      metric <- get_metric(
-        data = as.data.frame(resampled_data), outcome = outcome, group = group,
-        probs = probs, cutoff = cutoff
-      )
-      unlisted_metric <- unlist(metric)
-      max(unlisted_metric) - min(unlisted_metric)
-    })
-    max_min_diff$MAX_MIN_DIFF_CI <- c(
-      round(max_min_diff - 1.96 * sd(unlist(se)), digits),
-      round(max_min_diff + 1.96 * sd(unlist(se)), digits)
-    )
+    # Calculate the confidence intervals
+    CI_bounds <- apply(boot_metrics, 1, function(x)
+      quantile(x, c(0.025, 0.975), na.rm = TRUE))
+    metric$`95% CI` <- apply(CI_bounds, 2, function(x)
+      paste("[", round(x[1], digits), ",", round(x[2], digits), "]", sep = ""))
   }
-  if (message) {
-    cat(
-      "Maximum minimum difference for the model is",
-      max_min_diff[[1]], "\n"
-    )
-    if (confint) {
-      cat(
-        "95% CI for the maximum minimum difference is",
-        max_min_diff$MAX_MIN_DIFF_CI[1], "to",
-        max_min_diff$MAX_MIN_DIFF_CI[2], "\n"
-      )
-      if (max_min_diff$MAX_MIN_DIFF_CI[1] > 0 | max_min_diff$MAX_MIN_DIFF_CI[2] < 0) {
-        cat("There is evidence that model does not satisfy maximum minimum difference.\n")
-      } else {
-        cat("There is not enough evidence that the model does not satisfy
-            maximum minimum difference.\n")
-      }
-    }
-  }
-  return(max_min_diff)
+
+  return(metric)
 }
+
+
 
 
 #' Examine maximum minimum ratio of a model

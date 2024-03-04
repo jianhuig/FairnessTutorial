@@ -222,30 +222,32 @@ get_avg_prob <- function(data, outcome, group, probs, digits = 2) {
 #' @param digits the number of digits to round the result to, default is 2
 #' @return a Data frame of all metrics
 
-get_all_metrics <- function(data, outcome, group, probs, cutoff = 0.5,
-                            digits = 2) {
-  all_metrics <- list()  # Use a list to store metrics temporarily
-  metrics_names <- c("TPR", "FPR", "PPR", "PPV", "NPV", "ACC", "Brier Score",
-                     "FN/FP Ratio", "Avg Pred Prob")
+get_all_metrics <- function(data, outcome, group, probs, cutoff = 0.5, digits = 2) {
+  # Define metrics names
+  metrics_names <- c("TPR", "FPR", "PPR", "PPV", "NPV", "ACC", "Brier Score", "FN/FP Ratio", "Avg Pred Prob")
 
-  # Append each metric to the list
-  all_metrics[[1]] <- get_tpr(data, outcome, group, probs, cutoff, digits)
-  all_metrics[[2]] <- get_fpr(data, outcome, group, probs, cutoff, digits)
-  all_metrics[[3]] <- get_ppr(data, outcome, group, probs, cutoff, digits)
-  all_metrics[[4]] <- get_ppv(data, outcome, group, probs, cutoff, digits)
-  all_metrics[[5]] <- get_npv(data, outcome, group, probs, cutoff, digits)
-  all_metrics[[6]] <- get_acc(data, outcome, group, probs, cutoff, digits)
-  all_metrics[[7]] <- get_brier_score(data, outcome, group, probs, digits)
-  all_metrics[[8]] <- get_err_ratio(data, outcome, group, probs, cutoff, digits)
-  all_metrics[[9]] <- get_avg_prob(data, outcome, group, probs, digits)
+  # Obtain the number of groups to set the correct length of vectors
+  num_groups <- length(unique(data[[group]]))
 
-  # Convert the list of metrics into a data frame
-  all_metrics_df <- do.call(rbind, all_metrics)
-  rownames(all_metrics_df) <- metrics_names  # Assign metric names as row names
+  # Initialize a data frame to hold all metrics values
+  all_metrics_df <- data.frame(matrix(ncol = num_groups, nrow = length(metrics_names)))
+  colnames(all_metrics_df) <- paste0("Group ", sort(unique(data[[group]])))
+  rownames(all_metrics_df) <- metrics_names
 
-  # Create column names based on unique groups
-  group_names <- paste0("Group ", sort(unique(data[, group])))
-  colnames(all_metrics_df) <- group_names
+  # Populate the data frame with each metric vector
+  all_metrics_df["TPR", ] <- get_tpr(data, outcome, group, probs, cutoff, digits)
+  all_metrics_df["FPR", ] <- get_fpr(data, outcome, group, probs, cutoff, digits)
+  all_metrics_df["PPR", ] <- get_ppr(data, outcome, group, probs, cutoff, digits)
+  all_metrics_df["PPV", ] <- get_ppv(data, outcome, group, probs, cutoff, digits)
+  all_metrics_df["NPV", ] <- get_npv(data, outcome, group, probs, cutoff, digits)
+  all_metrics_df["ACC", ] <- get_acc(data, outcome, group, probs, cutoff, digits)
+  all_metrics_df["Brier Score", ] <- get_brier_score(data, outcome, group, probs, digits)
+  all_metrics_df["FN/FP Ratio", ] <- get_err_ratio(data, outcome, group, probs, cutoff, digits)
+  all_metrics_df["Avg Pred Prob", ] <- get_avg_prob(data, outcome, group, probs, digits)
+
+  # Convert row names to a column 'Metric'
+  all_metrics_df <- data.frame(Metric = rownames(all_metrics_df), all_metrics_df, check.names = FALSE, stringsAsFactors = FALSE)
+  rownames(all_metrics_df) <- NULL  # Reset row names
 
   return(all_metrics_df)
 }
