@@ -19,6 +19,63 @@
     <loc>/reference/equalized_odds.html</loc>
   </url>
   <url>
+    <loc>/reference/eval_acc_parity.html</loc>
+  </url>
+  <url>
+    <loc>/reference/eval_bs_parity.html</loc>
+  </url>
+  <url>
+    <loc>/reference/eval_cond_acc_equality.html</loc>
+  </url>
+  <url>
+    <loc>/reference/eval_cond_stats_parity.html</loc>
+  </url>
+  <url>
+    <loc>/reference/eval_eq_odds.html</loc>
+  </url>
+  <url>
+    <loc>/reference/eval_eq_opp.html</loc>
+  </url>
+  <url>
+    <loc>/reference/eval_generalized_entropy_index.html</loc>
+  </url>
+  <url>
+    <loc>/reference/eval_max_abs_diff.html</loc>
+  </url>
+  <url>
+    <loc>/reference/eval_max_min_diff.html</loc>
+  </url>
+  <url>
+    <loc>/reference/eval_max_min_ratio.html</loc>
+  </url>
+  <url>
+    <loc>/reference/eval_mean_abs_dev.html</loc>
+  </url>
+  <url>
+    <loc>/reference/eval_neg_class_bal.html</loc>
+  </url>
+  <url>
+    <loc>/reference/eval_pos_class_bal.html</loc>
+  </url>
+  <url>
+    <loc>/reference/eval_pred_equality.html</loc>
+  </url>
+  <url>
+    <loc>/reference/eval_pred_parity.html</loc>
+  </url>
+  <url>
+    <loc>/reference/eval_stats_parity.html</loc>
+  </url>
+  <url>
+    <loc>/reference/eval_treatment_equality.html</loc>
+  </url>
+  <url>
+    <loc>/reference/eval_variance.html</loc>
+  </url>
+  <url>
+    <loc>/reference/get_all_metrics.html</loc>
+  </url>
+  <url>
     <loc>/reference/get_fpr.html</loc>
   </url>
   <url>
@@ -26,5 +83,8 @@
   </url>
   <url>
     <loc>/reference/index.html</loc>
+  </url>
+  <url>
+    <loc>/reference/mimic.html</loc>
   </url>
 </urlset>
