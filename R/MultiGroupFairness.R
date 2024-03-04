@@ -61,427 +61,295 @@ eval_max_min_diff <- function(data, outcome, group, probs, cutoff = 0.5,
 }
 
 
-
-
-#' Examine maximum minimum ratio of a model
+#' Examine Maximum Minimum Ratio of a model
+#'
+#' This function evaluates the maximum and minimum ratio in model
+#' performance metrics across different groups.
 #' @param data Data frame containing the outcome, predicted outcome, and
 #' group
 #' @param outcome Name of the outcome variable, it must be binary
 #' @param group Name of the group
 #' @param probs Name of the predicted outcome variable
-#' @param get_metric Function of the model performance metric used to compute multi-group metrics
-#' The input should take in: data, outcome, group, probs, cutoff, and digits
-#' The output should be a list containing the following elements:
-#' - Name of each group
-#' - Calculated metric for each group
 #' @param cutoff Threshold for the predicted outcome, default is 0.5
 #' @param confint Whether to compute 95% confidence interval, default is TRUE
 #' @param bootstraps Number of bootstrap samples, default is 1000
 #' @param digits Number of digits to round the results to, default is 2
-#' @param message Whether to print the results, default is TRUE
-#' @return A list containing the following elements:
-#' - Max_min_ratio: maximum minimum metric ratio for the model
-#' If confidence intervals are computed (`confint = TRUE`):
-#' - MAX_MIN_RATIO_CI: A vector of length 2 providing the lower and upper bounds of
-#' the 95% confidence interval for the max-min metric ratio
+#' @return A data frame containing the following elements:
+#'   - Metric: The names of the metrics calculated.
+#'   - Values for each group.
+#'   - Max/Min: The maximum over minimum metric difference for the model
+#'   If confidence intervals are computed (`confint = TRUE`):
+#'   - 95% CI: A string providing the lower and upper bounds of the 95%
+#'   confidence interval for the max/min metric difference.
+#'
+#' @import dplyr
+#' @importFrom magrittr %>%
+#' @importFrom stats quantile
 #' @export
 
-eval_max_min_ratio <- function(data, outcome, group, probs, get_metric, cutoff = 0.5,
-                              confint = TRUE, bootstraps = 1000,
-                              digits = 2, message = TRUE){
-  metric <- get_metric(
-    data, outcome, group, probs, cutoff, digits
-  )
+eval_max_min_ratio <- function(data, outcome, group, probs, cutoff = 0.5,
+                              confint = TRUE, bootstraps = 1000, digits = 2){
+  metric <- get_all_metrics(data, outcome, group, probs, cutoff, digits)
 
-  # Check that the length of metric matches the number of unique groups
-  unique_groups <- unique(data[[group]])
-  if (!(length(unique_groups) == length(metric))) {
-    stop("Number of metrics don't match the number of groups")
-  }
-
-  unlisted_metric <- unlist(metric)
-  # Need to prevent from /0 from happening
-  max_min_ratio <- round(max(unlisted_metric) / min(unlisted_metric), digits)
+  metric$`Max/Min` <- apply(metric[,-1], 1, function(x) max(x) / min(x))
   # Calculate confidence interval
   if (confint) {
-    se <- lapply(1:bootstraps, function(j) {
-      # bootstrap within each group
-      resampled_data <- data %>%
-        group_by(!!group) %>%
-        sapply(resample_group)
+    boot_metrics <- replicate(bootstraps, {
+      resampled_data <- # Resample data within each group
+        resampled_data <- data %>%
+        dplyr::group_by(!!dplyr::sym(group)) %>%
+        dplyr::sample_n(dplyr::n(), replace = TRUE) %>%
+        dplyr::ungroup() %>%
+        data.frame() # Important: ungroup after sampling
+      boot_metric <- get_all_metrics(resampled_data, outcome, group, probs,
+                                     cutoff, digits)
 
-      metric <- get_metric(
-        data = as.data.frame(resampled_data), outcome = outcome, group = group,
-        probs = probs, cutoff = cutoff
-      )
-      unlisted_metric <- unlist(metric)
-      max(unlisted_metric) / min(unlisted_metric)
-    })
-    max_min_ratio$MAX_MIN_RATIO_CI <- c(
-      round(max_min_ratio - 1.96 * sd(unlist(se)), digits),
-      round(max_min_ratio + 1.96 * sd(unlist(se)), digits)
-    )
-  }
+      apply(metric[,-1], 1, function(x) max(x) / min(x))
+    }, simplify = "array")
 
-  if (message) {
-    cat(
-      "Maximum minimum ratio for the model is",
-      max_min_diff[[1]], "\n"
-    )
-    if (confint) {
-      cat(
-        "95% CI for the maximum minimum ratio is",
-        max_min_ratio$MAX_MIN_RATIO_CI[1], "to",
-        max_min_ratio$MAX_MIN_RATIO_CI[2], "\n"
-      )
-      if (max_min_ratio$MAX_MIN_RATIO_CI[1] > 0 | max_min_ratio$MAX_MIN_RATIO_CI[2] < 0) {
-        cat("There is evidence that model does not satisfy maximum minimum ratio\n")
-      } else {
-        cat("There is not enough evidence that the model does not satisfy
-            maximum minimum ratio\n")
-      }
-    }
+    CI_bounds <- apply(boot_metrics, 1, function(x)
+      stats::quantile(x, c(0.025, 0.975), na.rm = TRUE))
+    metric$`95% CI` <- apply(CI_bounds, 2, function(x)
+      paste("[", round(x[1], digits), ",", round(x[2], digits), "]", sep = ""))
   }
-  return(max_min_ratio)
+  return(metric)
 }
 
 
 #' Examine max absolute difference of a model
+#'
+#' This function evaluates the maximum absolute difference in model
+#' performance metrics across different groups.
 #' @param data Data frame containing the outcome, predicted outcome, and
 #' group
 #' @param outcome Name of the outcome variable, it must be binary
 #' @param group Name of the group
 #' @param probs Name of the predicted outcome variable
-#' @param get_metric Function of the model performance metric used to compute multi-group metrics
-#' The input should take in: data, outcome, group, probs, cutoff, and digits
-#' The output should be a list containing the following elements:
-#' - Name of each group
-#' - Calculated metric for each group
 #' @param cutoff Threshold for the predicted outcome, default is 0.5
 #' @param confint Whether to compute 95% confidence interval, default is TRUE
 #' @param bootstraps Number of bootstrap samples, default is 1000
 #' @param digits Number of digits to round the results to, default is 2
-#' @param message Whether to print the results, default is TRUE
-#' @return A list containing the following elements:
-#' - max_abs_diff: max absolute difference for the model
-#' If confidence intervals are computed (`confint = TRUE`):
-#' - MAX_ABS_DIFF_CI: A vector of length 2 providing the lower and upper bounds of
-#' the 95% confidence interval for the max absolute difference
+#' @return A data frame containing the following elements:
+#'   - Metric: The names of the metrics calculated.
+#'   - Values for each group.
+#'   - Max_abs_diff: The maximum absolute difference for the model
+#'   If confidence intervals are computed (`confint = TRUE`):
+#'   - 95% CI: A string providing the lower and upper bounds of the 95%
+#'   confidence interval for the maximum absolute difference.
+#'
+#' @import dplyr
+#' @importFrom magrittr %>%
+#' @importFrom stats quantile
 #' @export
 
-eval_max_abs_diff <- function(data, outcome, group, probs, get_metric, cutoff = 0.5,
-                               confint = TRUE, bootstraps = 1000,
-                               digits = 2, message = TRUE){
-  metric <- get_metric(
-    data, outcome, group, probs, cutoff, digits
-  )
+eval_max_abs_diff <- function(data, outcome, group, probs, cutoff = 0.5,
+                               confint = TRUE, bootstraps = 1000, digits = 2){
+  metric <- get_all_metrics(data, outcome, group, probs, cutoff, digits)
 
-  # Check that the length of metric matches the number of unique groups
-  unique_groups <- unique(data[[group]])
-  if (!(length(unique_groups) == length(metric))) {
-    stop("Number of metrics don't match the number of groups")
-  }
-
-  unlisted_metric <- unlist(metric)
-  max_abs_diff <- round(abs(max(unlisted_metric) - mean(unlisted_metric)), digits)
+  # Calculate Max absolute difference for each metric
+  metric$`Max_Abs_Diff` <- apply(metric[,-1], 1, function(x) round(abs(max(x) - mean(x))), digits)
   # Calculate confidence interval
   if (confint) {
-    se <- lapply(1:bootstraps, function(j) {
-      # bootstrap within each group
-      resampled_data <- data %>%
-        group_by(!!group) %>%
-        sapply(resample_group)
+    boot_metrics <- replicate(bootstraps, {
+      resampled_data <- # Resample data within each group
+        resampled_data <- data %>%
+        dplyr::group_by(!!dplyr::sym(group)) %>%
+        dplyr::sample_n(dplyr::n(), replace = TRUE) %>%
+        dplyr::ungroup() %>%
+        data.frame() # Important: ungroup after sampling
+      boot_metric <- get_all_metrics(resampled_data, outcome, group, probs,
+                                     cutoff, digits)
+      apply(metric[,-1], 1, function(x) abs(max(x) - mean(x)))
+    }, simplify = "array")
 
-      metric <- get_metric(
-        data = as.data.frame(resampled_data), outcome = outcome, group = group,
-        probs = probs, cutoff = cutoff
-      )
-      unlisted_metric <- unlist(metric)
-      abs(max(unlisted_metric) - mean(unlisted_metric))
-    })
-    max_abs_diff$MAX_ABS_DIFF_CI <- c(
-      round(max_abs_diff - 1.96 * sd(unlist(se)), digits),
-      round(max_abs_diff + 1.96 * sd(unlist(se)), digits)
-    )
+    # Calculate the confidence intervals
+    CI_bounds <- apply(boot_metrics, 1, function(x)
+      stats::quantile(x, c(0.025, 0.975), na.rm = TRUE))
+    metric$`95% CI` <- apply(CI_bounds, 2, function(x)
+      paste("[", round(x[1], digits), ",", round(x[2], digits), "]", sep = ""))
   }
-
-  if (message) {
-    cat(
-      "Maximum absolute difference for the model is",
-      max_abs_diff[[1]], "\n"
-    )
-    if (confint) {
-      cat(
-        "95% CI for the maximum absolute difference is",
-        max_abs_diff$MAX_ABS_DIFF_CI[1], "to",
-        max_abs_diff$MAX_ABS_DIFF_CI[2], "\n"
-      )
-      if (max_abs_diff$MAX_ABS_DIFF_CI[1] > 0 | max_abs_diff$MAX_ABS_DIFF_CI[2] < 0) {
-        cat("There is evidence that model does not satisfy maximum absolute difference\n")
-      } else {
-        cat("There is not enough evidence that the model does not satisfy
-            maximum absolute difference\n")
-      }
-    }
-  }
-  return(max_abs_diff)
+  return(metric)
 }
 
 
 #' Examine mean absolute deviation of a model
+#
+#' #' This function evaluates the mean absolute deviation in model
+#' performance metrics across different groups.
 #' @param data Data frame containing the outcome, predicted outcome, and
 #' group
 #' @param outcome Name of the outcome variable, it must be binary
 #' @param group Name of the group
 #' @param probs Name of the predicted outcome variable
-#' @param get_metric Function of the model performance metric used to compute multi-group metrics
-#' The input should take in: data, outcome, group, probs, cutoff, and digits
-#' The output should be a list containing the following elements:
-#' - Name of each group
-#' - Calculated metric for each group
 #' @param cutoff Threshold for the predicted outcome, default is 0.5
 #' @param confint Whether to compute 95% confidence interval, default is TRUE
 #' @param bootstraps Number of bootstrap samples, default is 1000
 #' @param digits Number of digits to round the results to, default is 2
-#' @param message Whether to print the results, default is TRUE
-#' @return A list containing the following elements:
-#' - mean_abs_dev: mean absolute difference for the model
-#' If confidence intervals are computed (`confint = TRUE`):
-#' - MEAN_ABS_DEV_CI: A vector of length 2 providing the lower and upper bounds of
-#' the 95% confidence interval for the mean absolute deviation
+#' @return A data frame containing the following elements:
+#'   - Metric: The names of the metrics calculated.
+#'   - Values for each group.
+#'   - Mean_abs_dev: The mean absolute deviation for the model
+#'   If confidence intervals are computed (`confint = TRUE`):
+#'   - 95% CI: A string providing the lower and upper bounds of the 95%
+#'   confidence interval for the mean absolute deviation.
+#'
+#' @import dplyr
+#' @importFrom magrittr %>%
+#' @importFrom stats quantile
+#' @importFrom stats mad
 #' @export
 
-eval_mean_abs_dev <- function(data, outcome, group, probs, get_metric, cutoff = 0.5,
-                              confint = TRUE, bootstraps = 1000,
-                              digits = 2, message = TRUE){
-  metric <- get_metric(
-    data, outcome, group, probs, cutoff, digits
-  )
+eval_mean_abs_dev <- function(data, outcome, group, probs, cutoff = 0.5,
+                              confint = TRUE, bootstraps = 1000, digits = 2){
+  metric <- get_all_metrics(data, outcome, group, probs, cutoff, digits)
 
-  # Check that the length of metric matches the number of unique groups
-  unique_groups <- unique(data[[group]])
-  if (!(length(unique_groups) == length(metric))) {
-    stop("Number of metrics don't match the number of groups")
-  }
+  # Calculate Mean Absolute Deviation for each metric
+  metric$`Max_abs_dev` <- apply(metric[,-1], 1, function(x) round(stats::mad(x, center = mean(x))), digits)
 
-  unlisted_metric <- unlist(metric)
-  mean_abs_dev <- round(mad(unlisted_metric, center = mean(unlisted_metric)), digits)
   # Calculate confidence interval
   if (confint) {
-    se <- lapply(1:bootstraps, function(j) {
-      # bootstrap within each group
-      resampled_data <- data %>%
-        group_by(!!group) %>%
-        sapply(resample_group)
+    boot_metrics <- replicate(bootstraps, {
+      resampled_data <- # Resample data within each group
+        resampled_data <- data %>%
+        dplyr::group_by(!!dplyr::sym(group)) %>%
+        dplyr::sample_n(dplyr::n(), replace = TRUE) %>%
+        dplyr::ungroup() %>%
+        data.frame() # Important: ungroup after sampling
+      boot_metric <- get_all_metrics(resampled_data, outcome, group, probs,
+                                     cutoff, digits)
+      apply(boot_metric[,-1], 1, function(x) stats::mad(x, center = mean(x)))
+    }, simplify = "array")
 
-      metric <- get_metric(
-        data = as.data.frame(resampled_data), outcome = outcome, group = group,
-        probs = probs, cutoff = cutoff
-      )
-      unlisted_metric <- unlist(metric)
-      mad(unlisted_metric, center = mean(unlisted_metric))
-    })
-    mean_abs_dev$MEAN_ABS_DEV_CI <- c(
-      round(mean_abs_dev - 1.96 * sd(unlist(se)), digits),
-      round(mean_abs_dev + 1.96 * sd(unlist(se)), digits)
-    )
+    # Calculate the confidence intervals
+    CI_bounds <- apply(boot_metrics, 1, function(x)
+      stats::quantile(x, c(0.025, 0.975), na.rm = TRUE))
+    metric$`95% CI` <- apply(CI_bounds, 2, function(x)
+      paste("[", round(x[1], digits), ",", round(x[2], digits), "]", sep = ""))
   }
 
-  if (message) {
-    cat(
-      "Mean absolute deviation for the model is",
-      mean_abs_dev[[1]], "\n"
-    )
-    if (confint) {
-      cat(
-        "95% CI for the mean absolute deviation is",
-        mean_abs_dev$MEAN_ABS_DEV_CI[1], "to",
-        mean_abs_dev$MEAN_ABS_DEV_CI[2], "\n"
-      )
-      if (mean_abs_dev$MEAN_ABS_DEV_CI[1] > 0 | mean_abs_dev$MEAN_ABS_DEV_CI[2] < 0) {
-        cat("There is evidence that model does not satisfy mean absolute deviation\n")
-      } else {
-        cat("There is not enough evidence that the model does not satisfy
-            mean absolute deviation\n")
-      }
-    }
-  }
-  return(mean_abs_dev)
+  return(metric)
 }
 
 
 #' Examine variance of a model
+#
+#' #' This function evaluates the variance in model
+#' performance metrics across different groups.
 #' @param data Data frame containing the outcome, predicted outcome, and
 #' group
 #' @param outcome Name of the outcome variable, it must be binary
 #' @param group Name of the group
 #' @param probs Name of the predicted outcome variable
-#' @param get_metric Function of the model performance metric used to compute multi-group metrics
-#' The input should take in: data, outcome, group, probs, cutoff, and digits
-#' The output should be a list containing the following elements:
-#' - Name of each group
-#' - Calculated metric for each group
 #' @param cutoff Threshold for the predicted outcome, default is 0.5
 #' @param confint Whether to compute 95% confidence interval, default is TRUE
 #' @param bootstraps Number of bootstrap samples, default is 1000
 #' @param digits Number of digits to round the results to, default is 2
-#' @param message Whether to print the results, default is TRUE
-#' @return A list containing the following elements:
-#' - variance: variance for the model
-#' If confidence intervals are computed (`confint = TRUE`):
-#' - VAR_CI: A vector of length 2 providing the lower and upper bounds of
-#' the 95% confidence interval for the variance
+#' @return A data frame containing the following elements:
+#'   - Metric: The names of the metrics calculated.
+#'   - Values for each group.
+#'   - Variance: The variance for the model
+#'   If confidence intervals are computed (`confint = TRUE`):
+#'   - 95% CI: A string providing the lower and upper bounds of the 95%
+#'   confidence interval for the variance.
+#'
+#' @import dplyr
+#' @importFrom magrittr %>%
+#' @importFrom stats quantile
+#' @importFrom stats var
 #' @export
 
-eval_variance <- function(data, outcome, group, probs, get_metric, cutoff = 0.5,
-                              confint = TRUE, bootstraps = 1000,
-                              digits = 2, message = TRUE){
-  metric <- get_metric(
-    data, outcome, group, probs, cutoff, digits
-  )
+eval_variance <- function(data, outcome, group, probs, cutoff = 0.5,
+                              confint = TRUE, bootstraps = 1000, digits = 2){
+  metric <- get_all_metrics(data, outcome, group, probs, cutoff, digits)
 
-  # Check that the length of metric matches the number of unique groups
-  unique_groups <- unique(data[[group]])
-  if (!(length(unique_groups) == length(metric))) {
-    stop("Number of metrics don't match the number of groups")
-  }
+  # Calculate Variance for each metric
+  metric$`Variance` <- apply(metric[,-1], 1, function(x) round(stats::var(x)), digits)
 
-  unlisted_metric <- unlist(metric)
-  variance <- round(var(unlisted_metric), digits)
   # Calculate confidence interval
   if (confint) {
-    se <- lapply(1:bootstraps, function(j) {
-      # bootstrap within each group
-      resampled_data <- data %>%
-        group_by(!!group) %>%
-        sapply(resample_group)
+    boot_metrics <- replicate(bootstraps, {
+      resampled_data <- # Resample data within each group
+        resampled_data <- data %>%
+        dplyr::group_by(!!dplyr::sym(group)) %>%
+        dplyr::sample_n(dplyr::n(), replace = TRUE) %>%
+        dplyr::ungroup() %>%
+        data.frame() # Important: ungroup after sampling
+      boot_metric <- get_all_metrics(resampled_data, outcome, group, probs,
+                                     cutoff, digits)
+      apply(boot_metric[,-1], 1, function(x) stats::var(x))
+    }, simplify = "array")
 
-      metric <- get_metric(
-        data = as.data.frame(resampled_data), outcome = outcome, group = group,
-        probs = probs, cutoff = cutoff
-      )
-      unlisted_metric <- unlist(metric)
-      var(unlisted_metric)
-    })
-    variance$VAR_CI <- c(
-      round(variance - 1.96 * sd(unlist(se)), digits),
-      round(variance + 1.96 * sd(unlist(se)), digits)
-    )
+    # Calculate the confidence intervals
+    CI_bounds <- apply(boot_metrics, 1, function(x)
+      stats::quantile(x, c(0.025, 0.975), na.rm = TRUE))
+    metric$`95% CI` <- apply(CI_bounds, 2, function(x)
+      paste("[", round(x[1], digits), ",", round(x[2], digits), "]", sep = ""))
   }
 
-  if (message) {
-    cat(
-      "Variance for the model is",
-      variance[[1]], "\n"
-    )
-    if (confint) {
-      cat(
-        "95% CI for the variance is",
-        variance$VAR_CI[1], "to",
-        variance$VAR_CI[2], "\n"
-      )
-      if (variance$VAR_CI[1] > 0 | variance$VAR_CI[2] < 0) {
-        cat("There is evidence that model does not satisfy variance\n")
-      } else {
-        cat("There is not enough evidence that the model does not satisfy
-            variance\n")
-      }
-    }
-  }
-  return(variance)
+  return(metric)
 }
 
 
 #' Examine Generalized Entropy Index of a model
+#
+#' #' This function evaluates the generalized entropy index in model
+#' performance metrics across different groups.
 #' @param data Data frame containing the outcome, predicted outcome, and
 #' group
 #' @param outcome Name of the outcome variable, it must be binary
 #' @param group Name of the group
 #' @param probs Name of the predicted outcome variable
-#' @param get_metric Function of the model performance metric used to compute multi-group metrics
-#' The input should take in: data, outcome, group, probs, cutoff, and digits
-#' The output should be a list containing the following elements:
-#' - Name of each group
-#' - Calculated metric for each group
-#' @param alpha Alpha for the generalized entropy index function (Cannot be 0 or 1), default is 2
 #' @param cutoff Threshold for the predicted outcome, default is 0.5
 #' @param confint Whether to compute 95% confidence interval, default is TRUE
 #' @param bootstraps Number of bootstrap samples, default is 1000
 #' @param digits Number of digits to round the results to, default is 2
-#' @param message Whether to print the results, default is TRUE
-#' @return A list containing the following elements:
-#' - generalized_entropy_index: generalized entropy index for the model
-#' If confidence intervals are computed (`confint = TRUE`):
-#' - GEN_ENTROPY_IND_CI: A vector of length 2 providing the lower and upper bounds of
-#' the 95% confidence interval for the generalized entropy index
+#' @return A data frame containing the following elements:
+#'   - Metric: The names of the metrics calculated.
+#'   - Values for each group.
+#'   - Generalized_entropy_index: The generalized entropy index for the model
+#'   If confidence intervals are computed (`confint = TRUE`):
+#'   - 95% CI: A string providing the lower and upper bounds of the 95%
+#'   confidence interval for the generalized entropy index.
+#'
+#' @import dplyr
+#' @importFrom magrittr %>%
+#' @importFrom stats quantile
 #' @export
 
-eval_generalized_entropy_index <- function(data, outcome, group, probs, get_metric, alpha = 2,
-                          cutoff = 0.5, confint = TRUE, bootstraps = 1000,
-                          digits = 2, message = TRUE){
-  metric <- get_metric(
-    data, outcome, group, probs, cutoff, digits
-  )
+eval_generalized_entropy_index <- function(data, outcome, group, probs, alpha = 2,
+                          cutoff = 0.5, confint = TRUE, bootstraps = 1000, digits = 2){
+  metric <- get_all_metrics(data, outcome, group, probs, cutoff, digits)
 
-  # Check that the length of metric matches the number of unique groups
-  unique_groups <- unique(data[[group]])
-  if (!(length(unique_groups) == length(metric))) {
-    stop("Number of metrics don't match the number of groups")
-  }
   if (alpha %in% c(0, 1)){
     stop("Alpha cannot be 0 or 1. Please choose another alpha")
   }
 
-  K <- length(unique_groups)
-  unlisted_metric <- unlist(metric)
-  entropy <- 0
-  for (value in unlisted_metric){
-    entropy <- entropy + ((value / mean(unlisted_metric)) ^ alpha - 1)
-  }
-  generalized_entropy_index <- round(1/(K * alpha * (alpha - 1)) * entropy, digits)
+  # Calculate Generalized Entropy Index for each metric
+  K <- length(unique(data[[group]]))
+  metric$`Generalized_Entropy_Index` <- apply(metric[,-1], 1, function(x)
+    round(1/(K * alpha * (alpha - 1)) * (sum((x / mean(x)) ^ alpha - 1)), digits))
+
   # Calculate confidence interval
   if (confint) {
-    se <- lapply(1:bootstraps, function(j) {
-      # bootstrap within each group
-      resampled_data <- data %>%
-        group_by(!!group) %>%
-        sapply(resample_group)
+    boot_metrics <- replicate(bootstraps, {
+      resampled_data <- # Resample data within each group
+        resampled_data <- data %>%
+        dplyr::group_by(!!dplyr::sym(group)) %>%
+        dplyr::sample_n(dplyr::n(), replace = TRUE) %>%
+        dplyr::ungroup() %>%
+        data.frame() # Important: ungroup after sampling
+      boot_metric <- get_all_metrics(resampled_data, outcome, group, probs,
+                                     cutoff, digits)
+      apply(boot_metric[,-1], 1, function(x)
+        round(1/(K * alpha * (alpha - 1)) * (sum((x / mean(x)) ^ alpha - 1)), digits))
+    }, simplify = "array")
 
-      metric <- get_metric(
-        data = as.data.frame(resampled_data), outcome = outcome, group = group,
-        probs = probs, cutoff = cutoff
-      )
-      unlisted_metric <- unlist(metric)
-      entropy <- 0
-      for (value in unlisted_metric){
-        entropy <- entropy + ((value / mean(unlisted_metric)) ^ alpha - 1)
-      }
-      1/(K * alpha * (alpha - 1)) * entropy
-    })
-    generalized_entropy_index$GEN_ENTROPY_IND_CI <- c(
-      round(generalized_entropy_index - 1.96 * sd(unlist(se)), digits),
-      round(generalized_entropy_index + 1.96 * sd(unlist(se)), digits)
-    )
+    # Calculate the confidence intervals
+    CI_bounds <- apply(boot_metrics, 1, function(x)
+      stats::quantile(x, c(0.025, 0.975), na.rm = TRUE))
+    metric$`95% CI` <- apply(CI_bounds, 2, function(x)
+      paste("[", round(x[1], digits), ",", round(x[2], digits), "]", sep = ""))
   }
 
-  if (message) {
-    cat(
-      "Generalized entropy index for the model is",
-      generalized_entropy_index[[1]], "\n"
-    )
-    if (confint) {
-      cat(
-        "95% CI for the generalized entropy index is",
-        generalized_entropy_index$GEN_ENTROPY_IND_CI[1], "to",
-        generalized_entropy_index$GEN_ENTROPY_IND_CI[2], "\n"
-      )
-      if (generalized_entropy_index$GEN_ENTROPY_IND_CI[1] > 0 | generalized_entropy_index$GEN_ENTROPY_IND_CI[2] < 0) {
-        cat("There is evidence that model does not satisfy generalized entropy index\n")
-      } else {
-        cat("There is not enough evidence that the model does not satisfy
-            generalized entropy index\n")
-      }
-    }
-  }
-  return(generalized_entropy_index)
+  return(metric)
 }

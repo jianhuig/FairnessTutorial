@@ -2,20 +2,20 @@
 % Please edit documentation in R/MultiGroupFairness.R
 \name{eval_generalized_entropy_index}
 \alias{eval_generalized_entropy_index}
-\title{Examine Generalized Entropy Index of a model}
+\title{Examine Generalized Entropy Index of a model
+#' This function evaluates the generalized entropy index in model
+performance metrics across different groups.}
 \usage{
 eval_generalized_entropy_index(
   data,
   outcome,
   group,
   probs,
-  get_metric,
   alpha = 2,
   cutoff = 0.5,
   confint = TRUE,
   bootstraps = 1000,
-  digits = 2,
-  message = TRUE
+  digits = 2
 )
 }
 \arguments{
@@ -28,16 +28,6 @@ group}
 
 \item{probs}{Name of the predicted outcome variable}
 
-\item{get_metric}{Function of the model performance metric used to compute multi-group metrics
-The input should take in: data, outcome, group, probs, cutoff, and digits
-The output should be a list containing the following elements:
-\itemize{
-\item Name of each group
-\item Calculated metric for each group
-}}
-
-\item{alpha}{Alpha for the generalized entropy index function (Cannot be 0 or 1), default is 2}
-
 \item{cutoff}{Threshold for the predicted outcome, default is 0.5}
 
 \item{confint}{Whether to compute 95\% confidence interval, default is TRUE}
@@ -45,18 +35,20 @@ The output should be a list containing the following elements:
 \item{bootstraps}{Number of bootstrap samples, default is 1000}
 
 \item{digits}{Number of digits to round the results to, default is 2}
-
-\item{message}{Whether to print the results, default is TRUE}
 }
 \value{
-A list containing the following elements:
+A data frame containing the following elements:
 \itemize{
-\item generalized_entropy_index: generalized entropy index for the model
+\item Metric: The names of the metrics calculated.
+\item Values for each group.
+\item Generalized_entropy_index: The generalized entropy index for the model
 If confidence intervals are computed (\code{confint = TRUE}):
-\item GEN_ENTROPY_IND_CI: A vector of length 2 providing the lower and upper bounds of
-the 95\% confidence interval for the generalized entropy index
+\item 95\% CI: A string providing the lower and upper bounds of the 95\%
+confidence interval for the generalized entropy index.
 }
 }
 \description{
 Examine Generalized Entropy Index of a model
+#' This function evaluates the generalized entropy index in model
+performance metrics across different groups.
 }
