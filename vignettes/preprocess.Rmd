@@ -14,13 +14,10 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup, message=FALSE, warning=FALSE}
+```{r setup}
 library(FairnessTutorial)
 library(dplyr)
 library(corrplot)
-library(randomForest)
-library(pROC)
-library(SpecsVerification)
 
 data("mimic")
 ```
@@ -55,45 +52,9 @@ mimic<- mimic %>% mutate(across(where(~any(is.na(.))), ~ifelse(is.na(.), median(
 remaining_missing_values <- sum(sapply(mimic, function(x) sum(is.na(x))))
 remaining_missing_values
 
-# Identify columns that have only one unique value
-cols_with_one_value <- sapply(mimic, function(x) length(unique(x)) == 1)
-
-# Subset the dataframe to remove these columns
-mimic <- mimic[, !cols_with_one_value]
-```
-
-# Model Building
-
-```{r}
 # Remove columns that are highly correlated with the outcome variable
 corrplot(cor(select_if(mimic, is.numeric)), method = "color", tl.cex = 0.5)
 mimic <- mimic %>% 
-  select(-c("hosp_exp_flg", "icu_exp_flg", "mort_day_censored", "censor_flg"))
-
-# Use 700 labels to train the mimic
-train_data <- mimic %>% filter(row_number() <= 700)
-# Fit a random forest model
-rf_model <- randomForest(factor(day_28_flg) ~ ., data = train_data, seed = 123)
-
-# Test the model on the remaining data
-test_data <- mimic %>% filter(row_number() > 700)
-test_data$pred <- predict(rf_model, newdata = test_data, type = "prob")[,2]
+  select(-c("hosp_exp_flg", "icu_exp_flg", "mort_day_censored", "censor_flg", "sepsis_flg"))
 ```
 
-# Check Basic Model Performance
-
-```{r}
-# Calculate the ROC curve
-roc_curve <- roc(test_data$day_28_flg, test_data$pred)
-# Calculate the AUC
-roc_auc <- auc(roc_curve)
-# Plot the ROC curve
-plot(roc_curve, main = "ROC Curve")
-# Add AUC to the plot
-legend("bottomright", legend = paste("AUC =", round(roc_auc, 2)), box.lty = 1)
-# Check calibration
-ReliabilityDiagram(test_data$pred,test_data$day_28_flg,plot = TRUE)
-
-# Check Briar Score
-mean((test_data$day_28_flg - test_data$pred)^2)
-```
