@@ -2,11 +2,16 @@ Package: FairnessTutorial
 Title: What the Package Does (One Line, Title Case)
 Version: 0.0.0.9000
 Authors@R: 
-    person("Jianhui", "Gao", , "jianhui.gao@mail.utoronto.ca", role = c("aut", "cre"))
+    c(person("Jianhui", "Gao", email = "jianhui.gao@mail.utoronto.ca", 
+    role = c("aut", "cre")),
+    person("Benson", "Chou", email = "benson.chou@mail.utoronto.ca", 
+    role = c("aut", "cre")),
+    person("Jessica", "Gronsbell", email = "j.gronsbell@utoronto.ca", 
+    role = c("aut", "cre")))
 Description: What the package does (one paragraph).
 Imports:
   magrittr
-License: use_mit_license()
+License: GPL-3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
