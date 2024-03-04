@@ -5,9 +5,9 @@ Authors@R:
     c(person("Jianhui", "Gao", email = "jianhui.gao@mail.utoronto.ca", 
     role = c("aut", "cre")),
     person("Benson", "Chou", email = "benson.chou@mail.utoronto.ca", 
-    role = c("aut", "cre")),
+    role = c("aut")),
     person("Jessica", "Gronsbell", email = "j.gronsbell@utoronto.ca", 
-    role = c("aut", "cre")))
+    role = c("aut")))
 Description: What the package does (one paragraph).
 Imports:
   magrittr
