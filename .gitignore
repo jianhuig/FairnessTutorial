@@ -4,3 +4,4 @@
 .gitattributes
 .Rhistory
 docs
+inst/doc
