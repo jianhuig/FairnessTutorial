@@ -225,7 +225,8 @@ get_avg_prob <- function(data, outcome, group, probs, digits = 2) {
 get_all_metrics <- function(data, outcome, group, probs, cutoff = 0.5,
                             digits = 2) {
   all_metrics <- list()  # Use a list to store metrics temporarily
-  metrics_names <- c("TPR", "FPR", "PPR", "PPV", "NPV", "ACC", "Brier Score", "FN/FP Ratio", "Avg Pred Prob")
+  metrics_names <- c("TPR", "FPR", "PPR", "PPV", "NPV", "ACC", "Brier Score",
+                     "FN/FP Ratio", "Avg Pred Prob")
 
   # Append each metric to the list
   all_metrics[[1]] <- get_tpr(data, outcome, group, probs, cutoff, digits)
@@ -238,15 +239,13 @@ get_all_metrics <- function(data, outcome, group, probs, cutoff = 0.5,
   all_metrics[[8]] <- get_err_ratio(data, outcome, group, probs, cutoff, digits)
   all_metrics[[9]] <- get_avg_prob(data, outcome, group, probs, digits)
 
-  # Combine the metrics into a data frame
-  all_metrics_df <- as.data.frame(do.call(rbind, all_metrics))
+  # Convert the list of metrics into a data frame
+  all_metrics_df <- do.call(rbind, all_metrics)
+  rownames(all_metrics_df) <- metrics_names  # Assign metric names as row names
 
-  # Insert metric names as the first column
-  all_metrics_df <- cbind("Metric" = metrics_names, all_metrics_df)
-
-  # Create column names for metrics based on unique groups, adjusting for the additional 'Metric' column
+  # Create column names based on unique groups
   group_names <- paste0("Group ", sort(unique(data[, group])))
-  colnames(all_metrics_df)[-1] <- group_names  # Avoid changing the name of the first column
+  colnames(all_metrics_df) <- group_names
 
   return(all_metrics_df)
 }
