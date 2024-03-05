@@ -7,13 +7,13 @@
     <loc>https://jianhuig.github.io/FairnessTutorial/LICENSE-text.html</loc>
   </url>
   <url>
+    <loc>https://jianhuig.github.io/FairnessTutorial/articles/MultiGroup.html</loc>
+  </url>
+  <url>
+    <loc>https://jianhuig.github.io/FairnessTutorial/articles/TwoGroup.html</loc>
+  </url>
+  <url>
     <loc>https://jianhuig.github.io/FairnessTutorial/articles/index.html</loc>
-  </url>
-  <url>
-    <loc>https://jianhuig.github.io/FairnessTutorial/articles/my-vignette.html</loc>
-  </url>
-  <url>
-    <loc>https://jianhuig.github.io/FairnessTutorial/articles/preprocess.html</loc>
   </url>
   <url>
     <loc>https://jianhuig.github.io/FairnessTutorial/authors.html</loc>
@@ -74,9 +74,6 @@
   </url>
   <url>
     <loc>https://jianhuig.github.io/FairnessTutorial/reference/eval_variance.html</loc>
-  </url>
-  <url>
-    <loc>https://jianhuig.github.io/FairnessTutorial/reference/fit_rf.html</loc>
   </url>
   <url>
     <loc>https://jianhuig.github.io/FairnessTutorial/reference/get_all_metrics.html</loc>
