@@ -19,3 +19,8 @@ library(FairnessTutorial)
 
 data("mimic")
 ```
+
+```{r}
+test <- fit_rf(mimic)
+```
+

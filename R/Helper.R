@@ -70,7 +70,7 @@ fit_rf <- function(data) {
   # Use 700 labels to train the data
   train_data <- data[1:700, ]
   # Fit a random forest model
-  rf_model <- randomForest::randomForest(factor(data$day_28_flg) ~ .,
+  rf_model <- randomForest::randomForest(factor(train_data$day_28_flg) ~ .,
                            data = train_data, seed = 123)
 
   # Test the model on the remaining data
