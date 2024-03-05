@@ -2,29 +2,44 @@
 # Customized Fairness Function Implementation
 # -----------------------------------------------------------------------------
 
-#' Examine equal opportunity of a model
-#' @param data Data frame containing the outcome, predicted outcome, and
-#' sensitive attribute
-#' @param outcome Name of the outcome variable, it must be binary
-#' @param group Name of the sensitive attribute
-#' @param probs Name of the predicted outcome variable
-#' @param cutoff Threshold for the predicted outcome, default is 0.5
-#' @param confint Whether to compute 95% confidence interval, default is TRUE
-#' @param bootstraps Number of bootstrap samples, default is 1000
-#' @param digits Number of digits to round the results to, default is 2
-#' @param message Whether to print the results, default is TRUE
-#' @return A list containing the following elements:
-#' - TPR_Group1: True Positive Rate for the first group
-#' - TPR_Group2: True Positive Rate for the second group
-#' - TPR_Diff: The difference in True Positive Rates between the two groups
-#' If confidence intervals are computed (`confint = TRUE`):
-#' - TPR_Diff_CI: A vector of length 2 providing the lower and upper bounds of
-#' the 95% confidence interval for the TPR difference
+#' Evaluate Equal Opportunity Compliance of a Predictive Model
+#'
+#' This function evaluates the equal opportunity compliance of a predictive model
+#' by comparing the True Positive Rates (TPR) across different groups defined by
+#' a sensitive attribute. It is used to determine if a model exhibits bias
+#' towards any group for binary outcomes.
+#'
+#' @param data A dataframe containing the actual outcomes, predicted probabilities,
+#' and sensitive attributes necessary for evaluating model fairness.
+#' @param outcome The name of the outcome variable in the data; it must be binary.
+#' @param group The name of the sensitive attribute variable used to define groups
+#' for comparison in the fairness evaluation.
+#' @param probs The name of the variable containing predicted probabilities or scores.
+#' @param cutoff The threshold for converting predicted probabilities into binary
+#' predictions; defaults to 0.5.
+#' @param bootstraps The number of bootstrap samples used for estimating the
+#' confidence interval; defaults to 1000.
+#' @param digits The number of decimal places to which numerical results are rounded;
+#' defaults to 2.
+#' @param message Logical; whether to print summary results to the console; defaults to TRUE.
+#' @return Returns a dataframe with the following columns:
+#' \itemize{
+#'   \item Metric: Describes the metric being reported (TPR for each group, difference).
+#'   \item Group1: True Positive Rate for the first group.
+#'   \item Group2: True Positive Rate for the second group.
+#'   \item Difference: The difference in True Positive Rates between the two groups.
+#'   \item CI: The 95% confidence interval for the TPR difference.
+#' }
+#' @examples
+#' # Example usage:
+#' eval_eq_opp(
+#'   data = your_data, outcome = "actual_outcome",
+#'   group = "sensitive_attribute", probs = "predicted_probs"
+#' )
 #' @export
 
 eval_eq_opp <- function(data, outcome, group, probs, cutoff = 0.5,
-                        confint = TRUE, bootstraps = 1000,
-                        digits = 2, message = TRUE) {
+                        bootstraps = 1000, digits = 2, message = TRUE) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
@@ -36,60 +51,58 @@ eval_eq_opp <- function(data, outcome, group, probs, cutoff = 0.5,
     cutoff = cutoff, digits = digits
   )
 
-  tpr$TPR_Diff <- tpr[[1]] - tpr[[2]]
+  tpr_diff <- tpr[[1]] - tpr[[2]]
 
   # Calculate confidence interval
-  if (confint) {
-    se <- lapply(1:bootstraps, function(j) {
-      # bootstrap within each group
-      group1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
-        replace = TRUE
-      )
-      group2 <- sample(which(data[[group]] == unique(data[[group]])[2]),
-        replace = TRUE
-      )
-      data_boot <- rbind(data[group1, ], data[group2, ])
-
-      tpr <- get_tpr(
-        data = data_boot, outcome = outcome, group = group,
-        probs = probs, cutoff = cutoff
-      )
-      tpr[[1]] - tpr[[2]]
-    })
-
-    tpr$TPR_Diff_CI <- c(
-      round(tpr$TPR_Diff - 1.96 * sd(unlist(se)), digits),
-      round(tpr$TPR_Diff + 1.96 * sd(unlist(se)), digits)
+  se <- replicate(bootstraps, {
+    # Bootstrap within each group
+    group1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
+      replace = TRUE
     )
-  }
+    group2 <- sample(which(data[[group]] == unique(data[[group]])[2]),
+      replace = TRUE
+    )
+    data_boot <- rbind(data[group1, ], data[group2, ])
 
+    tpr_boot <- get_tpr(
+      data = data_boot, outcome = outcome, group = group,
+      probs = probs, cutoff = cutoff
+    )
+    return(tpr_boot[[1]] - tpr_boot[[2]])
+  })
+
+  lower_ci <- round(tpr_diff - 1.96 * sd(se), digits)
+  upper_ci <- round(tpr_diff + 1.96 * sd(se), digits)
+
+  # Create a dataframe for the results
+  results_df <- data.frame(
+    "TPR",
+    tpr[[1]],
+    tpr[[2]],
+    tpr_diff,
+    paste0("[", lower_ci, ", ", upper_ci, "]")
+  )
+
+  colnames(results_df) <- c(
+    "Metric", paste0("Group", unique(data[[group]])[[1]]),
+    paste0("Group", unique(data[[group]])[[2]]),
+    "Difference", "95% CI"
+  )
+
+  # Print message if desired
   if (message) {
-    cat(
-      "True positive rate (TPR) for Group", unique(data[[group]])[1], "is",
-      tpr[[1]], "\n"
-    )
-    cat(
-      "TPR for Group", unique(data[[group]])[2], "is",
-      tpr[[2]], "\n"
-    )
-    cat("Difference in TPR is", tpr$TPR_Diff, "\n")
-    if (confint) {
-      cat(
-        "95% CI for the difference in TPR is",
-        tpr$TPR_Diff_CI[1], "to",
-        tpr$TPR_Diff_CI[2], "\n"
-      )
-      if (tpr$TPR_Diff_CI[1] > 0 | tpr$TPR_Diff_CI[2] < 0) {
-        cat("There is evidence that model does not satisfy equal opportunity.\n")
-      } else {
-        cat("There is not enough evidence that the model does not satisfy equal
-            opportunity.\n")
-      }
+    if (lower_ci > 0 | upper_ci < 0) {
+      cat("There is evidence that model does not satisfy equal opportunity.\n")
+    } else {
+      cat("There is not enough evidence that the model does not satisfy equal
+          opportunity.\n")
     }
   }
 
-  return(tpr)
+  return(results_df)
 }
+
+
 
 #' Examine equalized odds of a model
 #' @param data Data frame containing the outcome, predicted outcome, and

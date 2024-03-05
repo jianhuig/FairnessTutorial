@@ -2,7 +2,7 @@
 % Please edit documentation in R/Fairness.R
 \name{eval_eq_opp}
 \alias{eval_eq_opp}
-\title{Examine equal opportunity of a model}
+\title{Evaluate Equal Opportunity Compliance of a Predictive Model}
 \usage{
 eval_eq_opp(
   data,
@@ -10,43 +10,53 @@ eval_eq_opp(
   group,
   probs,
   cutoff = 0.5,
-  confint = TRUE,
   bootstraps = 1000,
   digits = 2,
   message = TRUE
 )
 }
 \arguments{
-\item{data}{Data frame containing the outcome, predicted outcome, and
-sensitive attribute}
+\item{data}{A dataframe containing the actual outcomes, predicted probabilities,
+and sensitive attributes necessary for evaluating model fairness.}
 
-\item{outcome}{Name of the outcome variable, it must be binary}
+\item{outcome}{The name of the outcome variable in the data; it must be binary.}
 
-\item{group}{Name of the sensitive attribute}
+\item{group}{The name of the sensitive attribute variable used to define groups
+for comparison in the fairness evaluation.}
 
-\item{probs}{Name of the predicted outcome variable}
+\item{probs}{The name of the variable containing predicted probabilities or scores.}
 
-\item{cutoff}{Threshold for the predicted outcome, default is 0.5}
+\item{cutoff}{The threshold for converting predicted probabilities into binary
+predictions; defaults to 0.5.}
 
-\item{confint}{Whether to compute 95\% confidence interval, default is TRUE}
+\item{bootstraps}{The number of bootstrap samples used for estimating the
+confidence interval; defaults to 1000.}
 
-\item{bootstraps}{Number of bootstrap samples, default is 1000}
+\item{digits}{The number of decimal places to which numerical results are rounded;
+defaults to 2.}
 
-\item{digits}{Number of digits to round the results to, default is 2}
-
-\item{message}{Whether to print the results, default is TRUE}
+\item{message}{Logical; whether to print summary results to the console; defaults to TRUE.}
 }
 \value{
-A list containing the following elements:
+Returns a dataframe with the following columns:
 \itemize{
-\item TPR_Group1: True Positive Rate for the first group
-\item TPR_Group2: True Positive Rate for the second group
-\item TPR_Diff: The difference in True Positive Rates between the two groups
-If confidence intervals are computed (\code{confint = TRUE}):
-\item TPR_Diff_CI: A vector of length 2 providing the lower and upper bounds of
-the 95\% confidence interval for the TPR difference
+\item Metric: Describes the metric being reported (TPR for each group, difference).
+\item Group1: True Positive Rate for the first group.
+\item Group2: True Positive Rate for the second group.
+\item Difference: The difference in True Positive Rates between the two groups.
+\item CI: The 95\% confidence interval for the TPR difference.
 }
 }
 \description{
-Examine equal opportunity of a model
+This function evaluates the equal opportunity compliance of a predictive model
+by comparing the True Positive Rates (TPR) across different groups defined by
+a sensitive attribute. It is used to determine if a model exhibits bias
+towards any group for binary outcomes.
+}
+\examples{
+# Example usage:
+eval_eq_opp(
+  data = your_data, outcome = "actual_outcome",
+  group = "sensitive_attribute", probs = "predicted_probs"
+)
 }

@@ -1,8 +1,8 @@
 ---
-title: "Two Group Fairness Tutorial"
+title: "MultiGroup"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Two Group Fairness Tutorial}
+  %\VignetteIndexEntry{MultiGroup}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -16,11 +16,4 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 library(FairnessTutorial)
-
-data("mimic")
 ```
-
-```{r}
-test <- fit_rf(mimic)
-```
-

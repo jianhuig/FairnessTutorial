@@ -1,8 +1,8 @@
 ---
-title: "Preprocessing Data"
+title: "Two Group Fairness Tutorial"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{my-vignette}
+  %\VignetteIndexEntry{Two Group Fairness Tutorial}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -25,7 +25,9 @@ library(SpecsVerification)
 data("mimic")
 ```
 
-# Missing Data
+# Data Preprocessing
+
+## Missing Data
 
 ```{r}
 # Calculate the number of missing values per column
@@ -62,7 +64,7 @@ cols_with_one_value <- sapply(mimic, function(x) length(unique(x)) == 1)
 mimic <- mimic[, !cols_with_one_value]
 ```
 
-# Model Building
+## Model Building
 
 ```{r}
 # Remove columns that are highly correlated with the outcome variable
@@ -78,4 +80,36 @@ rf_model <- randomForest(factor(day_28_flg) ~ ., data = train_data, seed = 123)
 # Test the model on the remaining data
 test_data <- mimic %>% filter(row_number() > 700)
 test_data$pred <- predict(rf_model, newdata = test_data, type = "prob")[,2]
+```
+
+# Fairness Evaluation
+
+We will use sex as the sensitive attribute and day_28_flg as the outcome.
+
+```{r}
+test_data <- test_data %>%
+  mutate(gender = ifelse(gender_num == 1, "Male", "Female"))
+```
+
+We choose threshold = 0.41 so that the overall FPR is around 5%.
+
+```{r}
+cut_off <- 0.41
+
+test_data %>%
+  mutate(pred = ifelse(pred > 0.41, 1, 0)) %>%
+  filter(day_28_flg == 0) %>%
+  summarise(fpr = mean(pred))
+```
+
+## Equal Opportunity
+
+```{r}
+eval_eq_opp(
+  dat = test_data,
+  outcome = "day_28_flg",
+  group = "gender",
+  probs = "pred",
+  cutoff = cut_off
+)
 ```
