@@ -37,7 +37,8 @@ jobs:
 
       - name: Install vignette dependencies
         run: |
-          install.packages(c('dplyr', 'corrplot', 'randomForest', 'pROC', 'SpecsVerification'))
+          install.packages(c('dplyr', 'corrplot', 'randomForest', 'pROC',
+          'SpecsVerification', 'caret', 'PheCAP', 'glmnet'))
         shell: Rscript {0}
 
       - name: Build site
