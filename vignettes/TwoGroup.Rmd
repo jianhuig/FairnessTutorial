@@ -113,3 +113,146 @@ eval_eq_opp(
   cutoff = cut_off
 )
 ```
+
+## Equalized Odds
+
+```{r}
+eval_eq_odds(
+  dat = test_data,
+  outcome = "day_28_flg",
+  group = "gender",
+  probs = "pred",
+  cutoff = cut_off
+)
+```
+
+## Statistical Parity
+
+```{r}
+eval_stats_parity(
+  dat = test_data,
+  outcome = "day_28_flg",
+  group = "gender",
+  probs = "pred",
+  cutoff = cut_off
+)
+```
+
+## Conditional Statistical Parity
+
+We conditional on age >= 60.
+
+```{r}
+eval_cond_stats_parity(dat = test_data,
+  outcome = "day_28_flg",
+  group = "gender",
+  probs = "pred",
+  cutoff = cut_off,
+  group2 = "age",
+  condition = ">= 60")
+```
+
+We can also condition on a categorical variable. For example, we can condition on the service unit = MICU.
+
+
+```{r}
+eval_cond_stats_parity(dat = test_data,
+  outcome = "day_28_flg",
+  group = "gender",
+  probs = "pred",
+  cutoff = cut_off,
+  group2 = "service_unit",
+  condition = "MICU")
+```
+
+## Predictive Parity
+
+```{r}
+eval_pred_parity(
+  dat = test_data,
+  outcome = "day_28_flg",
+  group = "gender",
+  probs = "pred",
+  cutoff = cut_off
+)
+```
+
+## Predictive Equality
+
+```{r}
+eval_pred_equality(
+  dat = test_data,
+  outcome = "day_28_flg",
+  group = "gender",
+  probs = "pred",
+  cutoff = cut_off
+)
+```
+
+## Conditional Accuracy Equality
+
+```{r}
+eval_cond_acc_equality(
+  dat = test_data,
+  outcome = "day_28_flg",
+  group = "gender",
+  probs = "pred",
+  cutoff = cut_off
+)
+```
+
+## Accuracy Parity
+
+```{r}
+eval_acc_parity(
+  dat = test_data,
+  outcome = "day_28_flg",
+  group = "gender",
+  probs = "pred",
+  cutoff = cut_off
+)
+```
+
+## Brier Score Parity
+
+```{r}
+eval_bs_parity(
+  dat = test_data,
+  outcome = "day_28_flg",
+  group = "gender",
+  probs = "pred"
+)
+```
+
+## Treatment Equality
+
+```{r}
+eval_treatment_equality(
+  dat = test_data,
+  outcome = "day_28_flg",
+  group = "gender",
+  probs = "pred"
+)
+```
+
+## Balance for Positive Class
+
+```{r}
+eval_pos_class_bal(
+  dat = test_data,
+  outcome = "day_28_flg",
+  group = "gender",
+  probs = "pred"
+)
+```
+
+## Balance for Negative Class
+
+```{r}
+eval_neg_class_bal(
+  dat = test_data,
+  outcome = "day_28_flg",
+  group = "gender",
+  probs = "pred"
+)
+```

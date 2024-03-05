@@ -103,37 +103,42 @@ eval_eq_opp <- function(data, outcome, group, probs, cutoff = 0.5,
 }
 
 
-
-#' Examine equalized odds of a model
-#' @param data Data frame containing the outcome, predicted outcome, and
-#' sensitive attribute
-#' @param outcome Name of the outcome variable, it must be binary
-#' @param group Name of the sensitive attribute
-#' @param probs Name of the predicted outcome variable
-#' @param cutoff Threshold for the predicted outcome, default is 0.5
-#' @param confint Whether to compute 95% confidence interval, default is TRUE
-#' @param bootstraps Number of bootstrap samples, default is 1000
-#' @param digits Number of digits to round the results to, default is 2
-#' @param message Whether to print the results, default is TRUE
-#' @return A list containing the following elements:
-#'  - TPR_Group1: True Positive Rate for the first group
-#'  - TPR_Group2: True Positive Rate for the second group
-#'  - TPR_Difference: The difference in True Positive Rates between the two
-#'  groups
-#'  - FPR_Group1: False Positive Rate for the first group
-#'  - FPR_Group2: False Positive Rate for the second group
-#'  - FPR_Difference: The difference in False Positive Rates between the two
-#'  groups
-#'  If confidence intervals are computed (`confint = TRUE`):
-#'  - TPR_Diff_CI: A vector of length 2 providing the lower and upper bounds
-#'  of the 95% confidence interval for the TPR difference
-#'  - FPR_Diff_CI: A vector of length 2 providing the lower and upper bounds
-#'  of the 95% confidence interval for the FPR difference
+#' Examine Equalized Odds of a Predictive Model
+#'
+#' This function examines the equalized odds of a predictive model by comparing
+#' both the True Positive Rates (TPR) and False Positive Rates (FPR) across different
+#' groups defined by a sensitive attribute. It assesses if a model performs unbiasedly
+#' for binary outcomes across these groups, adhering to the equalized odds fairness criterion.
+#'
+#' @param data A dataframe containing the actual outcomes, predicted outcomes,
+#' and sensitive attributes necessary for evaluating model fairness.
+#' @param outcome The name of the outcome variable in the data; it must be binary.
+#' @param group The name of the sensitive attribute variable used to define groups
+#' for comparison in the fairness evaluation.
+#' @param probs The name of the variable containing predicted probabilities or scores.
+#' @param cutoff The threshold for converting predicted probabilities into binary
+#' predictions; defaults to 0.5.
+#' @param bootstraps The number of bootstrap samples used for estimating the
+#' uncertainty in the fairness metrics; defaults to 1000.
+#' @param digits The number of decimal places to which numerical results are rounded;
+#' defaults to 2.
+#' @param message Logical; whether to print summary results to the console; defaults to TRUE.
+#' @return Returns a dataframe with the following columns:
+#'   - Metric: Describes the metric being reported (TPR and FPR for each group, difference).
+#'   - Group1: Rate for the first group.
+#'   - Group2: Rate for the second group.
+#'   - Difference: The difference in rates between the two groups.
+#'   - 95% CI: The 95% confidence interval for the rate difference。
+#' @examples
+#' # Example usage:
+#' eval_eq_odds(
+#'   data = your_data, outcome = "actual_outcome",
+#'   group = "sensitive_attribute", probs = "predicted_probs"
+#' )
 #' @export
 
 eval_eq_odds <- function(data, outcome, group, probs, cutoff = 0.5,
-                         confint = TRUE, bootstraps = 1000,
-                         digits = 2, message = TRUE) {
+                         bootstraps = 1000, digits = 2, message = TRUE) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
@@ -149,91 +154,70 @@ eval_eq_odds <- function(data, outcome, group, probs, cutoff = 0.5,
     cutoff = cutoff, digits = digits
   )
 
-  tpr$TPR_Diff <- tpr[[1]] - tpr[[2]]
-  fpr$FPR_Diff <- fpr[[1]] - fpr[[2]]
+  tpr_diff <- tpr[[1]] - tpr[[2]]
+  fpr_diff <- fpr[[1]] - fpr[[2]]
 
   # Calculate confidence interval
-  if (confint) {
-    se <- lapply(1:bootstraps, function(j) {
-      # bootstrap within each group
-      group1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
-        replace = TRUE
-      )
-      group2 <- sample(which(data[[group]] == unique(data[[group]])[2]),
-        replace = TRUE
-      )
-      data_boot <- rbind(data[group1, ], data[group2, ])
-
-      tpr <- get_tpr(
-        data = data_boot, outcome = outcome, group = group,
-        probs = probs, cutoff = cutoff
-      )
-      fpr <- get_fpr(
-        data = data_boot, outcome = outcome, group = group,
-        probs = probs, cutoff = cutoff
-      )
-
-      list(se_tpr = tpr[[1]] - tpr[[2]], se_fpr = fpr[[1]] - fpr[[2]])
-    })
-
-    tpr$TPR_Diff_CI <- c(
-      round(tpr$TPR_Diff -
-        1.96 * sd(unlist(lapply(se, function(x) x$se_tpr))), digits),
-      round(tpr$TPR_Diff +
-        1.96 * sd(unlist(lapply(se, function(x) x$se_tpr))), digits)
+  se <- replicate(bootstraps, {
+    indices1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
+      replace = TRUE
     )
-    fpr$FPR_Diff_CI <- c(
-      round(fpr$FPR_Diff -
-        1.96 * sd(unlist(lapply(se, function(x) x$se_fpr))), digits),
-      round(fpr$FPR_Diff +
-        1.96 * sd(unlist(lapply(se, function(x) x$se_fpr))), digits)
+    indices2 <- sample(which(data[[group]] == unique(data[[group]])[2]),
+      replace = TRUE
     )
-  }
+    boot_data <- rbind(data[indices1, ], data[indices2, ])
 
+    boot_tpr <- get_tpr(
+      data = boot_data, outcome = outcome, group = group, probs = probs,
+      cutoff = cutoff, digits = digits
+    )
+    boot_fpr <- get_fpr(
+      data = boot_data, outcome = outcome, group = group, probs = probs,
+      cutoff = cutoff, digits = digits
+    )
+    c(boot_tpr[[1]] - boot_tpr[[2]], boot_fpr[[1]] - boot_fpr[[2]])
+  })
+
+  # Calculate confidence intervals
+  tpr_lower <- round(tpr_diff - 1.96 * sd(se[1, ]), digits)
+  tpr_upper <- round(tpr_diff + 1.96 * sd(se[1, ]), digits)
+  fpr_lower <- round(fpr_diff - 1.96 * sd(se[2, ]), digits)
+  fpr_upper <- round(fpr_diff + 1.96 * sd(se[2, ]), digits)
+
+  # Structure the results as a dataframe
+  results_df <- data.frame(
+    Metric = c("TPR", "FPR"),
+    Group1 = c(tpr[[1]], fpr[[1]]),
+    Group2 = c(tpr[[2]], fpr[[2]]),
+    Difference = c(tpr_diff, fpr_diff),
+    CI = c(
+      paste0("[", tpr_lower, ", ", tpr_upper, "]"),
+      paste0("[", fpr_lower, ", ", fpr_upper, "]")
+    )
+  )
+
+  # Set proper column names, especially for '95% CI' to ensure it displays correctly
+  colnames(results_df) <- c(
+    "Metric",
+    paste0("Group ", unique(data[[group]])[[1]]),
+    paste0("Group ", unique(data[[group]])[[2]]),
+    "Difference", "95% CI"
+  )
+
+  # Print summary message if desired
   if (message) {
-    cat(
-      "True positive rate (TPR) for Group", unique(data[[group]])[1], "is",
-      tpr[[1]], "\n"
-    )
-    cat(
-      "TPR for Group", unique(data[[group]])[2], "is",
-      tpr[[2]], "\n"
-    )
-    cat("Difference in TPR is", tpr$TPR_Diff, "\n")
-    if (confint) {
-      cat(
-        "95% CI for the difference in TPR is",
-        tpr$TPR_Diff_CI[1], "to",
-        tpr$TPR_Diff_CI[2], "\n"
-      )
-    }
-    cat(
-      "False positive rate (FPR) for Group", unique(data[[group]])[1], "is",
-      fpr[[1]], "\n"
-    )
-    cat(
-      "FPR for Group", unique(data[[group]])[2], "is",
-      fpr[[2]], "\n"
-    )
-    cat("Difference in FPR is", fpr$FPR_Diff, "\n")
-    if (confint) {
-      cat(
-        "95% CI for the difference in FPR is",
-        fpr$FPR_Diff_CI[1], "to",
-        fpr$FPR_Diff_CI[2], "\n"
-      )
-      if ((tpr$TPR_Diff_CI[1] > 0 | tpr$TPR_Diff_CI[2] < 0) |
-        (fpr$FPR_Diff_CI[1] > 0 | fpr$FPR_Diff_CI[2] < 0)) {
-        cat("There is evidence that model does not satisfy the equalized odds.
-            \n")
-      } else {
-        cat("There is not enough evidence that the model does not satisfy the
-            equalized odds criterion.\n")
-      }
+    if (any(tpr_lower > 0) || any(tpr_upper < 0) || any(fpr_lower > 0) ||
+      any(fpr_upper < 0)) {
+      cat("There is evidence that model does not satisfy equalized odds.\n")
+    } else {
+      cat("There is not enough evidence that the model does not satisfy the
+          equalized odds criterion.\n")
     }
   }
-  return(c(tpr, fpr))
+
+  return(results_df)
 }
+
 
 #' Examine statistical parity of a model
 #' @param data Data frame containing the outcome, predicted outcome, and
@@ -270,59 +254,53 @@ eval_stats_parity <- function(data, outcome, group, probs, cutoff = 0.5,
     cutoff = cutoff, digits = digits
   )
 
-  ppr$PPR_Diff <- ppr[[1]] - ppr[[2]]
+  ppr_diff <- ppr[[1]] - ppr[[2]]
 
   # Calculate confidence interval
-  if (confint) {
-    se <- lapply(1:bootstraps, function(j) {
-      # bootstrap within each group
-      group1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
-        replace = TRUE
-      )
-      group2 <- sample(which(data[[group]] == unique(data[[group]])[2]),
-        replace = TRUE
-      )
-      data_boot <- rbind(data[group1, ], data[group2, ])
-
-      ppr <- get_tpr(
-        data = data_boot, outcome = outcome, group = group,
-        probs = probs, cutoff = cutoff
-      )
-      ppr[[1]] - ppr[[2]]
-    })
-
-    ppr$PPR_Diff_CI <- c(
-      round(ppr$PPR_Diff - 1.96 * sd(unlist(se)), digits),
-      round(ppr$PPR_Diff + 1.96 * sd(unlist(se)), digits)
+  se <- replicate(bootstraps, {
+    indices1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
+      replace = TRUE
     )
-  }
+    indices2 <- sample(which(data[[group]] == unique(data[[group]])[2]),
+      replace = TRUE
+    )
+    boot_data <- rbind(data[indices1, ], data[indices2, ])
+    ppr <- get_ppr(
+      data = boot_data, outcome = outcome, group = group, probs = probs,
+      cutoff = cutoff, digits = digits
+    )
+    ppr[[1]] - ppr[[2]]
+  })
+
+  lower_ci <- round(ppr_diff - 1.96 * sd(unlist(se)), digits)
+  upper_ci <- round(ppr_diff + 1.96 * sd(unlist(se)), digits)
+
+  # Structure the results as a dataframe
+  results_df <- data.frame(
+    Metric = "PPR",
+    Group1 = ppr[[1]],
+    Group2 = ppr[[2]],
+    Difference = ppr_diff,
+    CI = paste0("[", lower_ci, ", ", upper_ci, "]")
+  )
+
+  colnames(results_df) <- c(
+    "Metric",
+    paste0("Group ", unique(data[[group]])[[1]]),
+    paste0("Group ", unique(data[[group]])[[2]]),
+    "Difference", "95% CI"
+  )
 
   if (message) {
-    cat(
-      "Positive prediction rate (PPR) for Group", unique(data[[group]])[1], "is",
-      round(ppr[[1]], digits), "\n"
-    )
-    cat(
-      "PPR for Group", unique(data[[group]])[2], "is",
-      round(ppr[[2]], digits), "\n"
-    )
-    cat("Difference in PPR is", round(ppr$PPR_Diff, digits), "\n")
-    if (confint) {
-      cat(
-        "95% CI for the difference in PPR is",
-        round(ppr$PPR_Diff_CI[1], digits), "to",
-        round(ppr$PPR_Diff_CI[2], digits), "\n"
-      )
-      if (ppr$PPR_Diff_CI[1] > 0 | ppr$PPR_Diff_CI[2] < 0) {
-        cat("There is evidence that model does not satisfy statistical parity.\n")
-      } else {
-        cat("There is not enough evidence that the model does not satisfy
+    if (lower_ci > 0 || upper_ci < 0) {
+      cat("There is evidence that model does not satisfy statistical parity.\n")
+    } else {
+      cat("There is not enough evidence that the model does not satisfy
             statistical parity.\n")
-      }
     }
   }
 
-  return(ppr)
+  return(results_df)
 }
 
 #' Examine conditional statistical parity of a model
@@ -375,15 +353,13 @@ eval_cond_stats_parity <- function(data, outcome, group,
         data,
         eval(parse(text = paste0("data$", group2, condition)))
       )
-      cat("Conditional on", group2, condition, ":\n")
-      return(c(
-        list(condition = paste(group2, condition)),
+      return(
         eval_stats_parity(
           data = subset_data, outcome = outcome, group = group, probs = probs,
           cutoff = cutoff, confint = confint, bootstraps = bootstraps,
           digits = digits, message = message
         )
-      ))
+      )
     }
   } else {
     data[[group2]] <- as.factor(data[[group2]])
@@ -391,15 +367,13 @@ eval_cond_stats_parity <- function(data, outcome, group,
       stop("Condition must be a character of the levels to condition on.")
     } else {
       subset_data <- subset(data, data[[group2]] == condition)
-      cat("Conditional on", group2, "=", condition, ":\n")
-      return(c(
-        list(condition = paste(group2, condition)),
+      return(
         eval_stats_parity(
           data = subset_data, outcome = outcome, group = group, probs = probs,
           cutoff = cutoff, confint = confint, bootstraps = bootstraps,
           digits = digits, message = message
         )
-      ))
+      )
     }
   }
 }
@@ -438,59 +412,51 @@ eval_pred_parity <- function(data, outcome, group, probs, cutoff = 0.5,
     data = data, outcome = outcome, group = group, probs = probs,
     cutoff = cutoff, digits = digits
   )
-  ppv$PPV_Diff <- ppv[[1]] - ppv[[2]]
+  ppv_dif <- ppv[[1]] - ppv[[2]]
 
-  # Calculate confidence interval
-  if (confint) {
-    se <- lapply(1:bootstraps, function(j) {
-      # bootstrap within each group
-      group1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
-        replace = TRUE
-      )
-      group2 <- sample(which(data[[group]] == unique(data[[group]])[2]),
-        replace = TRUE
-      )
-      data_boot <- rbind(data[group1, ], data[group2, ])
-
-      ppv <- get_ppv(
-        data = data_boot, outcome = outcome, group = group, probs = probs,
-        cutoff = cutoff
-      )
-      ppv[[1]] - ppv[[2]]
-    })
-
-    ppv$PPV_Diff_CI <- c(
-      round(ppv$PPV_Diff - 1.96 * sd(unlist(se)), digits),
-      round(ppv$PPV_Diff + 1.96 * sd(unlist(se)), digits)
+  se <- replicate(bootstraps, {
+    group1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
+      replace = TRUE
     )
-  }
+    group2 <- sample(which(data[[group]] == unique(data[[group]])[2]),
+      replace = TRUE
+    )
+    data_boot <- rbind(data[group1, ], data[group2, ])
+    ppv_boot <- get_ppv(
+      data = data_boot, outcome = outcome, group = group, probs = probs,
+      cutoff = cutoff, digits = digits
+    )
+    ppv_boot[[1]] - ppv_boot[[2]]
+  })
+
+  lower_ci <- round(ppv_dif - 1.96 * sd(se), digits)
+  upper_ci <- round(ppv_dif + 1.96 * sd(se), digits)
+
+  result_df <- data.frame(
+    "PPV",
+    ppv[[1]],
+    ppv[[2]],
+    ppv_dif,
+    paste0("[", lower_ci, ", ", upper_ci, "]")
+  )
+  colnames(result_df) <- c(
+    "Metric",
+    paste0("Group", unique(data[[group]])[1]),
+    paste0("Group", unique(data[[group]])[2]),
+    "Difference",
+    "95% CI"
+  )
 
   if (message) {
-    cat(
-      "Positive predictive value (PPV) for Group", unique(data[[group]])[1],
-      "is", round(ppv[[1]], digits), "\n"
-    )
-    cat(
-      "Positive predictive value (PPV) for Group", unique(data[[group]])[2],
-      "is", round(ppv[[2]], digits), "\n"
-    )
-    cat("Difference in PPV is", round(ppv$PPV_Diff, digits), "\n")
-    if (confint) {
-      cat(
-        "95% CI for the difference in PPV is",
-        round(ppv$PPV_Diff_CI[1], digits), "to",
-        round(ppv$PPV_Diff_CI[2], digits), "\n"
-      )
-      if (ppv$PPV_Diff_CI[1] > 0 | ppv$PPV_Diff_CI[2] < 0) {
-        cat("There is evidence that model does not satisfy predictive parity.\n")
-      } else {
-        cat("There is not enough evidence that the model does not satisfy
+    if (lower_ci > 0 || upper_ci < 0) {
+      cat("There is evidence that model does not satisfy predictive parity.\n")
+    } else {
+      cat("There is not enough evidence that the model does not satisfy
             predictive parity.\n")
-      }
     }
   }
 
-  return(ppv)
+  return(result_df)
 }
 
 #' Examine predictive equality of a model
@@ -527,60 +493,52 @@ eval_pred_equality <- function(data, outcome, group, probs, cutoff = 0.5,
     cutoff = cutoff
   )
 
-  fpr$FPR_Diff <- fpr[[1]] - fpr[[2]]
+  fpr_dif <- fpr[[1]] - fpr[[2]]
 
-  # Calculate confidence interval
-  if (confint) {
-    se <- lapply(1:bootstraps, function(j) {
-      # bootstrap within each group
-      group1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
-        replace = TRUE
-      )
-      group2 <- sample(which(data[[group]] == unique(data[[group]])[2]),
-        replace = TRUE
-      )
-      data_boot <- rbind(data[group1, ], data[group2, ])
-
-      fpr <- get_fpr(
-        data = data_boot, outcome = outcome, group = group,
-        probs = probs, cutoff = cutoff
-      )
-
-      fpr[[1]] - fpr[[2]]
-    })
-
-    fpr$FPR_Diff_CI <- c(
-      round(fpr$FPR_Diff - 1.96 * sd(unlist(se)), digits),
-      round(fpr$FPR_Diff + 1.96 * sd(unlist(se)), digits)
+  se <- replicate(bootstraps, {
+    group1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
+      replace = TRUE
     )
-  }
+    group2 <- sample(which(data[[group]] == unique(data[[group]])[2]),
+      replace = TRUE
+    )
+    data_boot <- rbind(data[group1, ], data[group2, ])
+    fpr_boot <- get_fpr(
+      data = data_boot, outcome = outcome, group = group, probs = probs,
+      cutoff = cutoff
+    )
+    fpr_boot[[1]] - fpr_boot[[2]]
+  })
+
+  lower_ci <- round(fpr_dif - 1.96 * sd(se), digits)
+  upper_ci <- round(fpr_dif + 1.96 * sd(se), digits)
+
+  result_df <- data.frame(
+    "FPR",
+    fpr[[1]],
+    fpr[[2]],
+    fpr_dif,
+    paste0("[", lower_ci, ", ", upper_ci, "]")
+  )
+  colnames(result_df) <- c(
+    "Metric",
+    paste0("Group", unique(data[[group]])[1]),
+    paste0("Group", unique(data[[group]])[2]),
+    "Difference",
+    "95% CI"
+  )
 
   if (message) {
-    cat(
-      "False positive rate (FPR) for Group", unique(data[[group]])[1], "is",
-      round(fpr[[1]], digits), "\n"
-    )
-    cat(
-      "FPR for Group", unique(data[[group]])[2], "is",
-      round(fpr[[2]], digits), "\n"
-    )
-    cat("Difference in FPR is", round(fpr$FPR_Diff, digits), "\n")
-    if (confint) {
-      cat(
-        "95% CI for the difference in FPR is",
-        round(fpr$FPR_Diff_CI[1], digits), "to",
-        round(fpr$FPR_Diff_CI[2], digits), "\n"
-      )
-      if (fpr$FPR_Diff_CI[1] > 0 | fpr$FPR_Diff_CI[2] < 0) {
-        cat("There is evidence that model does not satisfy predictive
+    if (lower_ci > 0 || upper_ci < 0) {
+      cat("There is evidence that model does not satisfy predictive
             equality.\n")
-      } else {
-        cat("There is not enough evidence that the model does not satisfy
+    } else {
+      cat("There is not enough evidence that the model does not satisfy
             predictive equality.\n")
-      }
     }
   }
-  return(fpr)
+
+  return(result_df)
 }
 
 #' Examine conditional use accuracy equality of a model
@@ -633,99 +591,65 @@ eval_cond_acc_equality <- function(data, outcome, group, probs, cutoff = 0.5,
     data = data, outcome = outcome, group = group, probs = probs,
     cutoff = cutoff, digits = digits
   )
-  ppv$PPV_Diff <- ppv[[1]] - ppv[[2]]
-  npv$NPV_Diff <- npv[[1]] - npv[[2]]
+  ppv_diff <- ppv[[1]] - ppv[[2]]
+  npv_diff <- npv[[1]] - npv[[2]]
 
   # Calculate confidence interval
-  if (confint) {
-    se <- lapply(1:bootstraps, function(j) {
-      # bootstrap within each group
-      group1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
-        replace = TRUE
-      )
-      group2 <- sample(which(data[[group]] == unique(data[[group]])[2]),
-        replace = TRUE
-      )
-      data_boot <- rbind(data[group1, ], data[group2, ])
-
-      ppv <- get_ppv(
-        data = data_boot, outcome = outcome, group = group,
-        probs = probs, cutoff = cutoff
-      )
-      npv <- get_npv(
-        data = data_boot, outcome = outcome, group = group,
-        probs = probs, cutoff = cutoff
-      )
-
-      list(se_ppv = ppv[[1]] - ppv[[2]], se_npv = npv[[1]] - npv[[2]])
-    })
-
-    ppv$PPV_Diff_CI <- c(
-      round(
-        ppv$PPV_Diff - 1.96 * sd(unlist(lapply(se, function(x) x$se_ppv))),
-        digits
-      ),
-      round(
-        ppv$PPV_Diff + 1.96 * sd(unlist(lapply(se, function(x) x$se_ppv))),
-        digits
-      )
+  se <- replicate(bootstraps, {
+    group1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
+      replace = TRUE
     )
-    npv$NPV_Diff_CI <- c(
-      round(
-        npv$NPV_Diff - 1.96 * sd(unlist(lapply(se, function(x) x$se_npv))),
-        digits
-      ),
-      round(
-        npv$NPV_Diff + 1.96 * sd(unlist(lapply(se, function(x) x$se_npv))),
-        digits
-      )
+    group2 <- sample(which(data[[group]] == unique(data[[group]])[2]),
+      replace = TRUE
     )
-  }
+    data_boot <- rbind(data[group1, ], data[group2, ])
+    ppv_boot <- get_ppv(
+      data = data_boot, outcome = outcome, group = group, probs = probs,
+      cutoff = cutoff, digits = digits
+    )
+    npv_boot <- get_npv(
+      data = data_boot, outcome = outcome, group = group, probs = probs,
+      cutoff = cutoff, digits = digits
+    )
+    c(ppv_boot[[1]] - ppv_boot[[2]], npv_boot[[1]] - npv_boot[[2]])
+  })
+
+  ppv_lower_ci <- round(ppv_diff - 1.96 * sd(se[1, ]), digits)
+  ppv_upper_ci <- round(ppv_diff + 1.96 * sd(se[1, ]), digits)
+  npv_lower_ci <- round(npv_diff - 1.96 * sd(se[2, ]), digits)
+  npv_upper_ci <- round(npv_diff + 1.96 * sd(se[2, ]), digits)
+
+  result_df <- data.frame(
+    c("PPV", "NPV"),
+    c(ppv[[1]], npv[[1]]),
+    c(ppv[[2]], npv[[2]]),
+    c(ppv_diff, npv_diff),
+    c(
+      paste0("[", ppv_lower_ci, ", ", ppv_upper_ci, "]"),
+      paste0("[", npv_lower_ci, ", ", npv_upper_ci, "]")
+    )
+  )
+
+  colnames(result_df) <- c(
+    "Metric",
+    paste0("Group", unique(data[[group]])[1]),
+    paste0("Group", unique(data[[group]])[2]),
+    "Difference",
+    "95% CI"
+  )
 
   if (message) {
-    cat(
-      "Positive predictive value (PPV) for Group", unique(data[[group]])[1], "is",
-      round(ppv[[1]], digits), "\n"
-    )
-    cat(
-      "PPV for Group", unique(data[[group]])[2], "is",
-      round(ppv[[2]], digits), "\n"
-    )
-    cat("Difference in PPV is", round(ppv$PPV_Diff, digits), "\n")
-    if (confint) {
-      cat(
-        "95% CI for the difference in PPV is",
-        round(ppv$PPV_Diff_CI[1], digits), "to",
-        round(ppv$PPV_Diff_CI[2], digits), "\n"
-      )
-    }
-    cat(
-      "Negative predictive value (NPV) for Group", unique(data[[group]])[1], "is",
-      round(npv[[1]], digits), "\n"
-    )
-    cat(
-      "NPV for Group", unique(data[[group]])[2], "is",
-      round(npv[[2]], digits), "\n"
-    )
-    cat("Difference in NPV is", round(npv$NPV_Diff, digits), "\n")
-    if (confint) {
-      cat(
-        "95% CI for the difference in NPV is",
-        round(npv$NPV_Diff_CI[1], digits), "to",
-        round(npv$NPV_Diff_CI[2], digits), "\n"
-      )
-
-      if (ppv$PPV_Diff_CI[1] > 0 | ppv$PPV_Diff_CI[2] < 0 |
-        npv$NPV_Diff_CI[1] > 0 | npv$NPV_Diff_CI[2] < 0) {
-        cat("There is enough evidence that the model does not satisfy
+    if (ppv_lower_ci > 0 || ppv_upper_ci < 0 || npv_lower_ci > 0 ||
+      npv_upper_ci < 0) {
+      cat("There is evidence that the model does not satisfy
             conditional use accuracy equality.\n")
-      } else {
-        cat("There is not enough evidence that the model does not satisfy
+    } else {
+      cat("There is not enough evidence that the model does not satisfy
             conditional use accuracy equality.\n")
-      }
     }
   }
-  return(c(ppv, npv))
+
+  return(result_df)
 }
 
 #' Examine accuracy parity of a model
@@ -762,57 +686,52 @@ eval_acc_parity <- function(data, outcome, group, probs, cutoff = 0.5,
     digits = digits, cutoff = cutoff
   )
 
-  acc$ACC_Diff <- acc[[1]] - acc[[2]]
+  acc_diff <- acc[[1]] - acc[[2]]
 
-  if (confint) {
-    se <- lapply(1:bootstraps, function(j) {
-      # bootstrap within each group
-      group1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
-        replace = TRUE
-      )
-      group2 <- sample(which(data[[group]] == unique(data[[group]])[2]),
-        replace = TRUE
-      )
-      data_boot <- rbind(data[group1, ], data[group2, ])
-
-      acc <- get_acc(
-        data = data_boot, outcome = outcome, group = group,
-        probs = probs, cutoff = cutoff
-      )
-      acc[[1]] - acc[[2]]
-    })
-    acc$ACC_Diff_CI <- c(
-      round(acc$ACC_Diff - 1.96 * sd(unlist(se)), digits),
-      round(acc$ACC_Diff + 1.96 * sd(unlist(se)), digits)
+  se <- replicate(bootstraps, {
+    group1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
+      replace = TRUE
     )
-  }
+    group2 <- sample(which(data[[group]] == unique(data[[group]])[2]),
+      replace = TRUE
+    )
+    data_boot <- rbind(data[group1, ], data[group2, ])
+    acc_boot <- get_acc(
+      data = data_boot, outcome = outcome, group = group, probs = probs,
+      digits = digits, cutoff = cutoff
+    )
+    acc_boot[[1]] - acc_boot[[2]]
+  })
+
+  lower_ci <- round(acc_diff - 1.96 * sd(se), digits)
+  upper_ci <- round(acc_diff + 1.96 * sd(se), digits)
+
+  result_df <- data.frame(
+    "Accuracy",
+    acc[[1]],
+    acc[[2]],
+    acc_diff,
+    paste0("[", lower_ci, ", ", upper_ci, "]")
+  )
+
+  colnames(result_df) <- c(
+    "Metric",
+    paste0("Group", unique(data[[group]])[1]),
+    paste0("Group", unique(data[[group]])[2]),
+    "Difference",
+    "95% CI"
+  )
 
   if (message) {
-    cat(
-      "Accuracy for Group", unique(data[[group]])[1], "is",
-      round(acc[[1]], digits), "\n"
-    )
-    cat(
-      "Accuracy for Group", unique(data[[group]])[2], "is",
-      round(acc[[2]], digits), "\n"
-    )
-    cat("Difference in accuracy is", round(acc$ACC_Diff, digits), "\n")
-    if (confint) {
-      cat(
-        "95% CI for the difference in accuracy is",
-        round(acc$ACC_Diff_CI[1], digits), "to",
-        round(acc$ACC_Diff_CI[2], digits), "\n"
-      )
-      if (acc$ACC_Diff_CI[1] > 0 | acc$ACC_Diff_CI[2] < 0) {
-        cat("There is enough evidence that the model does not satisfy
+    if (lower_ci > 0 || upper_ci < 0) {
+      cat("There is evidence that the model does not satisfy
             accuracy parity.\n")
-      } else {
-        cat("There is not enough evidence that the model does not satisfy
+    } else {
+      cat("There is not enough evidence that the model does not satisfy
             accuracy parity.\n")
-      }
     }
   }
-  return(acc)
+  return(result_df)
 }
 
 #' Examine Brier Score parity of a model
@@ -848,58 +767,53 @@ eval_bs_parity <- function(data, outcome, group, probs,
     digits = digits
   )
 
-  bs$BS_Diff <- bs[[1]] - bs[[2]]
+  bs_diff <- bs[[1]] - bs[[2]]
 
-  if (confint) {
-    se <- lapply(1:bootstraps, function(j) {
-      # bootstrap within each group
-      group1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
-        replace = TRUE
-      )
-      group2 <- sample(which(data[[group]] == unique(data[[group]])[2]),
-        replace = TRUE
-      )
-      data_boot <- rbind(data[group1, ], data[group2, ])
-
-      bs <- get_brier_score(
-        data = data_boot, outcome = outcome, group = group,
-        probs = probs
-      )
-      bs[[1]] - bs[[2]]
-    })
-    bs$BS_Diff_CI <- c(
-      round(bs$BS_Diff - 1.96 * sd(unlist(se)), digits),
-      round(bs$BS_Diff + 1.96 * sd(unlist(se)), digits)
+  se <- replicate(bootstraps, {
+    group1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
+      replace = TRUE
     )
-  }
+    group2 <- sample(which(data[[group]] == unique(data[[group]])[2]),
+      replace = TRUE
+    )
+    data_boot <- rbind(data[group1, ], data[group2, ])
+    bs_boot <- get_brier_score(
+      data = data_boot, outcome = outcome, group = group, probs = probs,
+      digits = digits
+    )
+    bs_boot[[1]] - bs_boot[[2]]
+  })
+
+  lower_ci <- round(bs_diff - 1.96 * sd(se), digits)
+  upper_ci <- round(bs_diff + 1.96 * sd(se), digits)
+
+  result_df <- data.frame(
+    "Brier Score",
+    bs[[1]],
+    bs[[2]],
+    bs_diff,
+    paste0("[", lower_ci, ", ", upper_ci, "]")
+  )
+
+  colnames(result_df) <- c(
+    "Metric",
+    paste0("Group", unique(data[[group]])[1]),
+    paste0("Group", unique(data[[group]])[2]),
+    "Difference",
+    "95% CI"
+  )
 
   if (message) {
-    cat(
-      "Brier Score for Group", unique(data[[group]])[1], "is",
-      round(bs[[1]], digits), "\n"
-    )
-    cat(
-      "Brier Score for Group", unique(data[[group]])[2], "is",
-      round(bs[[2]], digits), "\n"
-    )
-    cat("Difference in Brier Score is", round(bs$BS_Diff, digits), "\n")
-    if (confint) {
-      cat(
-        "95% CI for the difference in Brier Score is",
-        round(bs$BS_Diff_CI[1], digits), "to",
-        round(bs$BS_Diff_CI[2], digits), "\n"
-      )
-      if (bs$BS_Diff_CI[1] > 0 | bs$BS_Diff_CI[2] < 0) {
-        cat("There is enough evidence that the model does not satisfy
+    if (lower_ci > 0 || upper_ci < 0) {
+      cat("There is evidence that the model does not satisfy
             Brier Score parity.\n")
-      } else {
-        cat("There is not enough evidence that the model does not satisfy
+    } else {
+      cat("There is not enough evidence that the model does not satisfy
             Brier Score parity.\n")
-      }
     }
   }
 
-  return(bs)
+  return(result_df)
 }
 
 #' Examine treatment equality of a model
@@ -935,62 +849,55 @@ eval_treatment_equality <- function(data, outcome, group, probs, cutoff = 0.5,
     data = data, outcome = outcome, group = group, probs = probs,
     cutoff = cutoff, digits = digits
   )
+  print(err_ratio)
+  err_ratio_diff <- err_ratio[[1]] - err_ratio[[2]]
 
-  err_ratio$"FN/FP_Diff" <- err_ratio[[1]] - err_ratio[[2]]
-
-  if (confint) {
-    se <- lapply(1:bootstraps, function(j) {
-      # bootstrap within each group
-      group1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
-        replace = TRUE
-      )
-      group2 <- sample(which(data[[group]] == unique(data[[group]])[2]),
-        replace = TRUE
-      )
-      data_boot <- rbind(data[group1, ], data[group2, ])
-
-      err_ratio <- get_err_ratio(
-        data = data_boot, outcome = outcome, group = group,
-        probs = probs, cutoff = cutoff
-      )
-      err_ratio[[1]] - err_ratio[[2]]
-    })
-    err_ratio$"FN/FP_Diff_CI" <- c(
-      round(err_ratio$"FN/FP_Diff" - 1.96 * sd(unlist(se)), digits),
-      round(err_ratio$"FN/FP_Diff" + 1.96 * sd(unlist(se)), digits)
+  se <- replicate(bootstraps, {
+    group1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
+      replace = TRUE
     )
-  }
+    group2 <- sample(which(data[[group]] == unique(data[[group]])[2]),
+      replace = TRUE
+    )
+    data_boot <- rbind(data[group1, ], data[group2, ])
+    err_ratio_boot <- get_err_ratio(
+      data = data_boot, outcome = outcome, group = group, probs = probs,
+      cutoff = cutoff, digits = digits
+    )
+    err_ratio_boot[[1]] - err_ratio_boot[[2]]
+  })
+  se <- se[!is.infinite(se)]
+
+  lower_ci <- round(err_ratio_diff - 1.96 * sd(se, na.rm = TRUE), digits)
+  upper_ci <- round(err_ratio_diff + 1.96 * sd(se, na.rm = TRUE), digits)
+
+  result_df <- data.frame(
+    "FN/FP Ratio",
+    err_ratio[[1]],
+    err_ratio[[2]],
+    err_ratio_diff,
+    paste0("[", lower_ci, ", ", upper_ci, "]")
+  )
+
+  colnames(result_df) <- c(
+    "Metric",
+    paste0("Group", unique(data[[group]])[1]),
+    paste0("Group", unique(data[[group]])[2]),
+    "Difference",
+    "95% CI"
+  )
 
   if (message) {
-    cat(
-      "False negative (FN) / false positive (FP) ratio for Group", unique(data[[group]])[1], "is",
-      round(err_ratio[[1]], digits), "\n"
-    )
-    cat(
-      "FN/FP ratio for Group", unique(data[[group]])[2], "is",
-      round(err_ratio[[2]], digits), "\n"
-    )
-    cat(
-      "Difference in FN/FP ratio is", round(err_ratio$"FN/FP_Diff", digits),
-      "\n"
-    )
-    if (confint) {
-      cat(
-        "95% CI for the difference in FN/FP ratio is",
-        round(err_ratio$"FN/FP_Diff_CI"[1], digits), "to",
-        round(err_ratio$"FN/FP_Diff_CI"[2], digits), "\n"
-      )
-      if (err_ratio$"FN/FP_Diff_CI"[1] > 0 | err_ratio$"FN/FP_Diff_CI"[2] < 0) {
-        cat("There is enough evidence that the model does not satisfy
+    if (lower_ci > 0 || upper_ci < 0) {
+      cat("There is evidence that the model does not satisfy
             treatment equality.\n")
-      } else {
-        cat("There is not enough evidence that the model does not satisfy
+    } else {
+      cat("There is not enough evidence that the model does not satisfy
             treatment equality.\n")
-      }
     }
   }
 
-  return(err_ratio)
+  return(result_df)
 }
 
 #' Examine balance for positive class of a model
@@ -1026,61 +933,53 @@ eval_pos_class_bal <- function(data, outcome, group, probs,
     data = pos_data, group = group, probs = probs, digits = digits
   )
 
-  avg_prob$Avg_Prob_Diff <- avg_prob[[1]] - avg_prob[[2]]
+  avg_prob_diff <- avg_prob[[1]] - avg_prob[[2]]
 
-  if (confint) {
-    se <- lapply(1:bootstraps, function(j) {
-      # bootstrap within each group
-      group1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
-        replace = TRUE
-      )
-      group2 <- sample(which(data[[group]] == unique(data[[group]])[2]),
-        replace = TRUE
-      )
-      data_boot <- rbind(data[group1, ], data[group2, ])
-      pos_data_boot <- data_boot[data_boot[[outcome]] == 1, ]
-      avg_prob_boot <- get_avg_prob(
-        data = pos_data_boot, group = group, probs = probs
-      )
-      avg_prob_boot[[1]] - avg_prob_boot[[2]]
-    })
-    avg_prob$"Avg_Prob_Diff_CI" <- c(
-      round(avg_prob$"Avg_Prob_Diff" - 1.96 * sd(unlist(se)), digits),
-      round(avg_prob$"Avg_Prob_Diff" + 1.96 * sd(unlist(se)), digits)
+  se <- replicate(bootstraps, {
+    group1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
+      replace = TRUE
     )
-  }
+    group2 <- sample(which(data[[group]] == unique(data[[group]])[2]),
+      replace = TRUE
+    )
+    data_boot <- rbind(data[group1, ], data[group2, ])
+    pos_data_boot <- data_boot[data_boot[[outcome]] == 1, ]
+    avg_prob_boot <- get_avg_prob(
+      data = pos_data_boot, group = group, probs = probs
+    )
+    avg_prob_boot[[1]] - avg_prob_boot[[2]]
+  })
+
+  lower_ci <- round(avg_prob_diff - 1.96 * sd(se, na.rm = TRUE), digits)
+  upper_ci <- round(avg_prob_diff + 1.96 * sd(se, na.rm = TRUE), digits)
+
+  result_df <- data.frame(
+    "Avg. Predicted Prob.",
+    avg_prob[[1]],
+    avg_prob[[2]],
+    avg_prob_diff,
+    paste0("[", lower_ci, ", ", upper_ci, "]")
+  )
+
+  colnames(result_df) <- c(
+    "Metric",
+    paste0("Group", unique(data[[group]])[1]),
+    paste0("Group", unique(data[[group]])[2]),
+    "Difference",
+    "95% CI"
+  )
 
   if (message) {
-    cat(
-      "Average predicted probability for Group", unique(data[[group]])[1], "is",
-      round(avg_prob[[1]], digits), "\n"
-    )
-    cat(
-      "Average predicted probability for Group", unique(data[[group]])[2], "is",
-      round(avg_prob[[2]], digits), "\n"
-    )
-    cat(
-      "Difference in average predicted probability is",
-      round(avg_prob$"Avg_Prob_Diff", digits), "\n"
-    )
-    if (confint) {
-      cat(
-        "95% CI for the difference in average predicted probability is",
-        round(avg_prob$"Avg_Prob_Diff_CI"[1], digits), "to",
-        round(avg_prob$"Avg_Prob_Diff_CI"[2], digits), "\n"
-      )
-      if (avg_prob$"Avg_Prob_Diff_CI"[1] > 0 |
-        avg_prob$"Avg_Prob_Diff_CI"[2] < 0) {
-        cat("There is enough evidence that the model does not satisfy
+    if (lower_ci > 0 || upper_ci < 0) {
+      cat("There is evidence that the model does not satisfy
             balance for positive class.\n")
-      } else {
-        cat("There is not enough evidence that the model does not satisfy
+    } else {
+      cat("There is not enough evidence that the model does not satisfy
             balance for positive class.\n")
-      }
     }
   }
 
-  return(avg_prob)
+  return(result_df)
 }
 
 #' Examine balance for negative class of a model
@@ -1116,59 +1015,51 @@ eval_neg_class_bal <- function(data, outcome, group, probs,
     data = neg_data, group = group, probs = probs, digits = digits
   )
 
-  avg_prob$Avg_Prob_Diff <- avg_prob[[1]] - avg_prob[[2]]
+  avg_prob_diff <- avg_prob[[1]] - avg_prob[[2]]
 
-  if (confint) {
-    se <- lapply(1:bootstraps, function(j) {
-      # bootstrap within each group
-      group1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
-        replace = TRUE
-      )
-      group2 <- sample(which(data[[group]] == unique(data[[group]])[2]),
-        replace = TRUE
-      )
-      data_boot <- rbind(data[group1, ], data[group2, ])
-      neg_data_boot <- data_boot[data_boot[[outcome]] == 0, ]
-      avg_prob_boot <- get_avg_prob(
-        data = neg_data_boot, group = group, probs = probs
-      )
-      avg_prob_boot[[1]] - avg_prob_boot[[2]]
-    })
-    avg_prob$"Avg_Prob_Diff_CI" <- c(
-      round(avg_prob$"Avg_Prob_Diff" - 1.96 * sd(unlist(se)), digits),
-      round(avg_prob$"Avg_Prob_Diff" + 1.96 * sd(unlist(se)), digits)
+  se <- replicate(bootstraps, {
+    group1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
+      replace = TRUE
     )
-  }
+    group2 <- sample(which(data[[group]] == unique(data[[group]])[2]),
+      replace = TRUE
+    )
+    data_boot <- rbind(data[group1, ], data[group2, ])
+    neg_data_boot <- data_boot[data_boot[[outcome]] == 0, ]
+    avg_prob_boot <- get_avg_prob(
+      data = neg_data_boot, group = group, probs = probs
+    )
+    avg_prob_boot[[1]] - avg_prob_boot[[2]]
+  })
+
+  lower_ci <- round(avg_prob_diff - 1.96 * sd(se, na.rm = TRUE), digits)
+  upper_ci <- round(avg_prob_diff + 1.96 * sd(se, na.rm = TRUE), digits)
+
+  result_df <- data.frame(
+    "Avg. Predicted Prob.",
+    avg_prob[[1]],
+    avg_prob[[2]],
+    avg_prob_diff,
+    paste0("[", lower_ci, ", ", upper_ci, "]")
+  )
+
+  colnames(result_df) <- c(
+    "Metric",
+    paste0("Group", unique(data[[group]])[1]),
+    paste0("Group", unique(data[[group]])[2]),
+    "Difference",
+    "95% CI"
+  )
 
   if (message) {
-    cat(
-      "Average predicted probability for Group", unique(data[[group]])[1], "is",
-      round(avg_prob[[1]], digits), "\n"
-    )
-    cat(
-      "Average predicted probability for Group", unique(data[[group]])[2], "is",
-      round(avg_prob[[2]], digits), "\n"
-    )
-    cat(
-      "Difference in average predicted probability is",
-      round(avg_prob$"Avg_Prob_Diff", digits), "\n"
-    )
-    if (confint) {
-      cat(
-        "95% CI for the difference in average predicted probability is",
-        round(avg_prob$"Avg_Prob_Diff_CI"[1], digits), "to",
-        round(avg_prob$"Avg_Prob_Diff_CI"[2], digits), "\n"
-      )
-      if (avg_prob$"Avg_Prob_Diff_CI"[1] > 0 |
-        avg_prob$"Avg_Prob_Diff_CI"[2] < 0) {
-        cat("There is enough evidence that the model does not satisfy
+    if (lower_ci > 0 || upper_ci < 0) {
+      cat("There is enough evidence that the model does not satisfy
             balance for negative class.\n")
-      } else {
-        cat("There is not enough evidence that the model does not satisfy
+    } else {
+      cat("There is not enough evidence that the model does not satisfy
             balance for negative class.\n")
-      }
     }
   }
 
-  return(avg_prob)
+  return(result_df)
 }
