@@ -1,8 +1,8 @@
 ---
-title: "Preprocessing Data"
+title: "Two Group Fairness Tutorial"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{my-vignette}
+  %\VignetteIndexEntry{Two Group Fairness Tutorial}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
