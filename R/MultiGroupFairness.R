@@ -147,7 +147,7 @@ eval_max_abs_diff <- function(data, outcome, group, probs, cutoff = 0.5,
   metric <- get_all_metrics(data, outcome, group, probs, cutoff, digits)
 
   # Calculate Max absolute difference for each metric
-  metric$`Max_Abs_Diff` <- apply(metric[,-1], 1, function(x) round(abs(max(x) - mean(x))), digits)
+  metric$`Max_Abs_Diff` <- apply(metric[,-1], 1, function(x) round(abs(max(x) - mean(x)), digits))
   # Calculate confidence interval
   if (confint) {
     boot_metrics <- replicate(bootstraps, {
@@ -204,7 +204,7 @@ eval_mean_abs_dev <- function(data, outcome, group, probs, cutoff = 0.5,
   metric <- get_all_metrics(data, outcome, group, probs, cutoff, digits)
 
   # Calculate Mean Absolute Deviation for each metric
-  metric$`Max_abs_dev` <- apply(metric[,-1], 1, function(x) round(stats::mad(x, center = mean(x))), digits)
+  metric$`Max_abs_dev` <- apply(metric[,-1], 1, function(x) round(stats::mad(x, center = mean(x)), digits))
 
   # Calculate confidence interval
   if (confint) {
@@ -263,7 +263,7 @@ eval_variance <- function(data, outcome, group, probs, cutoff = 0.5,
   metric <- get_all_metrics(data, outcome, group, probs, cutoff, digits)
 
   # Calculate Variance for each metric
-  metric$`Variance` <- apply(metric[,-1], 1, function(x) round(stats::var(x)), digits)
+  metric$`Variance` <- apply(metric[,-1], 1, function(x) round(stats::var(x), digits))
 
   # Calculate confidence interval
   if (confint) {

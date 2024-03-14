@@ -22,7 +22,9 @@ library(caret)
 library(glmnet)
 ```
 
-# Model Building
+# Data Preprocessing
+
+## Missing Data and Splitting Into Groups
 
 ```{r}
 data <- PheCAP::PhecapData(ehr_data, "healthcare_utilization", "label", 0.4)$frame
@@ -36,7 +38,11 @@ data <- data %>% mutate(HU_group = ifelse(healthcare_utilization <= quantile(hea
 target_data <- data %>% select(outcome, main_NLP, HU_group, healthcare_utilization, starts_with("NLP"))
 # Check if any missing data
 sum(is.na(target_data))
+```
 
+## Model Building
+
+```{r}
 # 75% of the sample size
 train_size <- floor(0.75 * nrow(target_data))
 # Split data
@@ -79,22 +85,87 @@ test %>%
   mutate(pred = ifelse(pred > 0.4, 1, 0)) %>%
   filter(outcome == 0) %>%
   summarise(fpr = mean(pred))
+```
 
-# Calculate the fairness metrics
+# Multi-Group Fairness Evaluation
+
+We will use hu_group as the sensitive attribute and outcome as the outcome
+
+```{r}
+# Categorize the group
 test <- test %>%
   mutate(hu_group = ifelse(HU_group == 1, paste0("0 to ", quantile(data$healthcare_utilization, 0.25)),
                            ifelse(HU_group ==2, paste0(quantile(data$healthcare_utilization, 0.25), " to ", quantile(data$healthcare_utilization, 0.5)),
                                   ifelse(HU_group == 3, paste0(quantile(data$healthcare_utilization, 0.5), " to ", quantile(data$healthcare_utilization, 0.75)), paste0(quantile(data$healthcare_utilization, 0.75), " to ", quantile(data$healthcare_utilization, 1))))))
-cut_off <- 0.4
+
 test <- test %>% select(outcome, pred, HU_group)
 ```
 
-# Multi-Group Fairness Evaluation
+We choose threshold = 0.56 so that the overall FPR is around 5%.
+
+```{r}
+cut_off <- 0.65
+
+test %>% 
+  mutate(pred = ifelse(pred > cut_off, 1, 0)) %>% 
+  filter(outcome == 0) %>% 
+  summarise(fpr = mean(pred))
+```
 
 ## Max-Min Difference
 
 ```{r}
 eval_max_min_diff(data = test, 
+                  outcome = "outcome", 
+                  probs = "pred",
+                  group = "HU_group",
+                  bootstraps = 1000)
+```
+
+## Max-Min Ratio
+
+```{r}
+eval_max_min_ratio(data = test, 
+                  outcome = "outcome", 
+                  probs = "pred",
+                  group = "HU_group",
+                  bootstraps = 1000)
+```
+
+## Max Absolute Difference
+
+```{r}
+eval_max_abs_diff(data = test, 
+                  outcome = "outcome", 
+                  probs = "pred",
+                  group = "HU_group",
+                  bootstraps = 1000)
+```
+
+## Mean Absolute Deviation
+
+```{r}
+eval_mean_abs_dev(data = test, 
+                  outcome = "outcome", 
+                  probs = "pred",
+                  group = "HU_group",
+                  bootstraps = 1000)
+```
+
+## Variance
+
+```{r}
+eval_variance(data = test, 
+                  outcome = "outcome", 
+                  probs = "pred",
+                  group = "HU_group",
+                  bootstraps = 1000)
+```
+
+## Generalized Entropy Index
+
+```{r}
+eval_generalized_entropy_index(data = test, 
                   outcome = "outcome", 
                   probs = "pred",
                   group = "HU_group",
