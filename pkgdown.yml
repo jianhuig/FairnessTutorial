@@ -5,7 +5,7 @@ articles:
   MultiGroup: MultiGroup.html
   TwoGroup: TwoGroup.html
   groupfairness: groupfairness.html
-last_built: 2024-03-05T21:24Z
+last_built: 2024-03-14T01:24Z
 urls:
   reference: https://jianhuig.github.io/FairnessTutorial/reference
   article: https://jianhuig.github.io/FairnessTutorial/articles
