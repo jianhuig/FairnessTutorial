@@ -403,7 +403,7 @@ eval_pred_parity <- function(data, outcome, group, probs, cutoff = 0.5,
                              confint = TRUE, bootstraps = 1000,
                              digits = 2, message = TRUE) {
   # Check if outcome is binary
-  unique_values <- unique(data[[outcome]])
+  unique_values <- sort(unique(data[[outcome]]))
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
     stop("Outcome must be binary (containing only 0 and 1).")
   }
@@ -415,10 +415,10 @@ eval_pred_parity <- function(data, outcome, group, probs, cutoff = 0.5,
   ppv_dif <- ppv[[1]] - ppv[[2]]
 
   se <- replicate(bootstraps, {
-    group1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
+    group1 <- sample(which(data[[group]] == sort(unique(data[[group]]))[1]),
       replace = TRUE
     )
-    group2 <- sample(which(data[[group]] == unique(data[[group]])[2]),
+    group2 <- sample(which(data[[group]] == sort(unique(data[[group]]))[2]),
       replace = TRUE
     )
     data_boot <- rbind(data[group1, ], data[group2, ])
@@ -441,8 +441,8 @@ eval_pred_parity <- function(data, outcome, group, probs, cutoff = 0.5,
   )
   colnames(result_df) <- c(
     "Metric",
-    paste0("Group", unique(data[[group]])[1]),
-    paste0("Group", unique(data[[group]])[2]),
+    paste0("Group", sort(unique(data[[group]]))[1]),
+    paste0("Group", sort(unique(data[[group]]))[2]),
     "Difference",
     "95% CI"
   )
