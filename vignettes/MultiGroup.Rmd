@@ -79,12 +79,6 @@ fit <- glmnet::glmnet(x_train, y_train, family = "binomial", alpha=1, lambda = b
 # Predictions
 test$pred <- predict(fit, newx = x_test, type = "response", s = best_lambda)[,1]
 mean(ifelse(test$pred > 0.4, 1, 0) == y_test)
-
-# The dataframe would need predictions, outcome, HU_group
-test %>%
-  mutate(pred = ifelse(pred > 0.4, 1, 0)) %>%
-  filter(outcome == 0) %>%
-  summarise(fpr = mean(pred))
 ```
 
 # Multi-Group Fairness Evaluation
@@ -98,10 +92,11 @@ test <- test %>%
                            ifelse(HU_group ==2, paste0(quantile(data$healthcare_utilization, 0.25), " to ", quantile(data$healthcare_utilization, 0.5)),
                                   ifelse(HU_group == 3, paste0(quantile(data$healthcare_utilization, 0.5), " to ", quantile(data$healthcare_utilization, 0.75)), paste0(quantile(data$healthcare_utilization, 0.75), " to ", quantile(data$healthcare_utilization, 1))))))
 
+# The dataframe would need predictions, outcome, HU_group
 test <- test %>% select(outcome, pred, HU_group)
 ```
 
-We choose threshold = 0.56 so that the overall FPR is around 5%.
+We choose threshold = 0.65 so that the overall FPR is around 5%.
 
 ```{r}
 cut_off <- 0.65
