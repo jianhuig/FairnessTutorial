@@ -11,7 +11,7 @@ eval_acc_parity(
   probs,
   cutoff = 0.5,
   confint = TRUE,
-  bootstraps = 1000,
+  bootstraps = 2500,
   digits = 2,
   message = TRUE
 )

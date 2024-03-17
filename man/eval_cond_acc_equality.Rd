@@ -11,7 +11,7 @@ eval_cond_acc_equality(
   probs,
   cutoff = 0.5,
   confint = TRUE,
-  bootstraps = 1000,
+  bootstraps = 2500,
   digits = 2,
   message = TRUE
 )
@@ -30,7 +30,7 @@ sensitive attribute}
 
 \item{confint}{Whether to compute 95\% confidence interval, default is TRUE}
 
-\item{bootstraps}{Number of bootstrap samples, default is 1000}
+\item{bootstraps}{Number of bootstrap samples, default is 2500}
 
 \item{digits}{Number of digits to round the results to, default is 2}
 

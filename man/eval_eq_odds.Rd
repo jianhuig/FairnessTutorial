@@ -10,7 +10,7 @@ eval_eq_odds(
   group,
   probs,
   cutoff = 0.5,
-  bootstraps = 1000,
+  bootstraps = 2500,
   digits = 2,
   message = TRUE
 )

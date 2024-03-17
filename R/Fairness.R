@@ -39,7 +39,7 @@
 #' @export
 
 eval_eq_opp <- function(data, outcome, group, probs, cutoff = 0.5,
-                        bootstraps = 1000, digits = 2, message = TRUE) {
+                        bootstraps = 2500, digits = 2, message = TRUE) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
@@ -84,8 +84,8 @@ eval_eq_opp <- function(data, outcome, group, probs, cutoff = 0.5,
   )
 
   colnames(results_df) <- c(
-    "Metric", paste0("Group", unique(data[[group]])[[1]]),
-    paste0("Group", unique(data[[group]])[[2]]),
+    "Metric", paste0("Group", sort(unique(data[[group]]))[[1]]),
+    paste0("Group", sort(unique(data[[group]]))[[2]]),
     "Difference", "95% CI"
   )
 
@@ -138,7 +138,7 @@ eval_eq_opp <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @export
 
 eval_eq_odds <- function(data, outcome, group, probs, cutoff = 0.5,
-                         bootstraps = 1000, digits = 2, message = TRUE) {
+                         bootstraps = 2500, digits = 2, message = TRUE) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
@@ -199,8 +199,8 @@ eval_eq_odds <- function(data, outcome, group, probs, cutoff = 0.5,
   # Set proper column names, especially for '95% CI' to ensure it displays correctly
   colnames(results_df) <- c(
     "Metric",
-    paste0("Group ", unique(data[[group]])[[1]]),
-    paste0("Group ", unique(data[[group]])[[2]]),
+    paste0("Group ", sort(unique(data[[group]]))[[1]]),
+    paste0("Group ", sort(unique(data[[group]]))[[2]]),
     "Difference", "95% CI"
   )
 
@@ -227,7 +227,7 @@ eval_eq_odds <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @param probs Name of the predicted outcome variable
 #' @param cutoff Threshold for the predicted outcome, default is 0.5
 #' @param confint Whether to compute 95% confidence interval, default is TRUE
-#' @param bootstraps Number of bootstrap samples, default is 1000
+#' @param bootstraps Number of bootstrap samples, default is 2500
 #' @param digits Number of digits to round the results to, default is 2
 #' @param message Whether to print the results, default is TRUE
 #' @return A list containing the following elements:
@@ -241,7 +241,7 @@ eval_eq_odds <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @export
 
 eval_stats_parity <- function(data, outcome, group, probs, cutoff = 0.5,
-                              confint = TRUE, bootstraps = 1000, digits = 2,
+                              confint = TRUE, bootstraps = 2500, digits = 2,
                               message = TRUE) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
@@ -286,8 +286,8 @@ eval_stats_parity <- function(data, outcome, group, probs, cutoff = 0.5,
 
   colnames(results_df) <- c(
     "Metric",
-    paste0("Group ", unique(data[[group]])[[1]]),
-    paste0("Group ", unique(data[[group]])[[2]]),
+    paste0("Group ", sort(unique(data[[group]]))[[1]]),
+    paste0("Group ", sort(unique(data[[group]]))[[2]]),
     "Difference", "95% CI"
   )
 
@@ -317,7 +317,7 @@ eval_stats_parity <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @param probs Name of the predicted outcome variable
 #' @param cutoff Threshold for the predicted outcome, default is 0.5
 #' @param confint Whether to compute 95% confidence interval, default is TRUE
-#' @param bootstraps Number of bootstrap samples, default is 1000
+#' @param bootstraps Number of bootstrap samples, default is 2500
 #' @param digits Number of digits to round the results to, default is 2
 #' @param message Whether to print the results, default is TRUE
 #' @return A list containing the following elements:
@@ -334,7 +334,7 @@ eval_stats_parity <- function(data, outcome, group, probs, cutoff = 0.5,
 eval_cond_stats_parity <- function(data, outcome, group,
                                    group2, condition, probs,
                                    cutoff = 0.5, confint = TRUE,
-                                   bootstraps = 1000, message = TRUE,
+                                   bootstraps = 2500, message = TRUE,
                                    digits = 2) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
@@ -386,7 +386,7 @@ eval_cond_stats_parity <- function(data, outcome, group,
 #' @param probs Name of the predicted outcome variable
 #' @param cutoff Threshold for the predicted outcome, default is 0.5
 #' @param confint Whether to compute 95% confidence interval, default is TRUE
-#' @param bootstraps Number of bootstrap samples, default is 1000
+#' @param bootstraps Number of bootstrap samples, default is 2500
 #' @param digits Number of digits to round the results to, default is 2
 #' @param message Whether to print the results, default is TRUE
 #' @return A list containing the following elements:
@@ -400,7 +400,7 @@ eval_cond_stats_parity <- function(data, outcome, group,
 #' @export
 
 eval_pred_parity <- function(data, outcome, group, probs, cutoff = 0.5,
-                             confint = TRUE, bootstraps = 1000,
+                             confint = TRUE, bootstraps = 2500,
                              digits = 2, message = TRUE) {
   # Check if outcome is binary
   unique_values <- sort(unique(data[[outcome]]))
@@ -467,7 +467,7 @@ eval_pred_parity <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @param probs Name of the predicted outcome variable
 #' @param cutoff Threshold for the predicted outcome, default is 0.5
 #' @param confint Whether to compute 95% confidence interval, default is TRUE
-#' @param bootstraps Number of bootstrap samples, default is 1000
+#' @param bootstraps Number of bootstrap samples, default is 2500
 #' @param digits Number of digits to round the results to, default is 2
 #' @param message Whether to print the results, default is TRUE
 #' @return A list containing the following elements:
@@ -480,7 +480,7 @@ eval_pred_parity <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @export
 
 eval_pred_equality <- function(data, outcome, group, probs, cutoff = 0.5,
-                               confint = TRUE, bootstraps = 1000,
+                               confint = TRUE, bootstraps = 2500,
                                digits = 2, message = TRUE) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
@@ -522,8 +522,8 @@ eval_pred_equality <- function(data, outcome, group, probs, cutoff = 0.5,
   )
   colnames(result_df) <- c(
     "Metric",
-    paste0("Group", unique(data[[group]])[1]),
-    paste0("Group", unique(data[[group]])[2]),
+    paste0("Group", sort(unique(data[[group]]))[1]),
+    paste0("Group", sort(unique(data[[group]]))[2]),
     "Difference",
     "95% CI"
   )
@@ -549,7 +549,7 @@ eval_pred_equality <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @param probs Name of the predicted outcome variable
 #' @param cutoff Threshold for the predicted outcome, default is 0.5
 #' @param confint Whether to compute 95% confidence interval, default is TRUE
-#' @param bootstraps Number of bootstrap samples, default is 1000
+#' @param bootstraps Number of bootstrap samples, default is 2500
 #' @param digits Number of digits to round the results to, default is 2
 #' @param message Whether to print the results, default is TRUE
 #' @return A list containing the following elements:
@@ -569,7 +569,7 @@ eval_pred_equality <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @export
 
 eval_cond_acc_equality <- function(data, outcome, group, probs, cutoff = 0.5,
-                                   confint = TRUE, bootstraps = 1000,
+                                   confint = TRUE, bootstraps = 2500,
                                    digits = 2, message = TRUE) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
@@ -632,8 +632,8 @@ eval_cond_acc_equality <- function(data, outcome, group, probs, cutoff = 0.5,
 
   colnames(result_df) <- c(
     "Metric",
-    paste0("Group", unique(data[[group]])[1]),
-    paste0("Group", unique(data[[group]])[2]),
+    paste0("Group", sort(unique(data[[group]]))[1]),
+    paste0("Group", sort(unique(data[[group]]))[2]),
     "Difference",
     "95% CI"
   )
@@ -673,7 +673,7 @@ eval_cond_acc_equality <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @export
 
 eval_acc_parity <- function(data, outcome, group, probs, cutoff = 0.5,
-                            confint = TRUE, bootstraps = 1000,
+                            confint = TRUE, bootstraps = 2500,
                             digits = 2, message = TRUE) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
@@ -716,8 +716,8 @@ eval_acc_parity <- function(data, outcome, group, probs, cutoff = 0.5,
 
   colnames(result_df) <- c(
     "Metric",
-    paste0("Group", unique(data[[group]])[1]),
-    paste0("Group", unique(data[[group]])[2]),
+    paste0("Group", sort(unique(data[[group]]))[1]),
+    paste0("Group", sort(unique(data[[group]]))[2]),
     "Difference",
     "95% CI"
   )
@@ -754,7 +754,7 @@ eval_acc_parity <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @export
 
 eval_bs_parity <- function(data, outcome, group, probs,
-                           confint = TRUE, bootstraps = 1000,
+                           confint = TRUE, bootstraps = 2500,
                            digits = 2, message = TRUE) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
@@ -797,8 +797,8 @@ eval_bs_parity <- function(data, outcome, group, probs,
 
   colnames(result_df) <- c(
     "Metric",
-    paste0("Group", unique(data[[group]])[1]),
-    paste0("Group", unique(data[[group]])[2]),
+    paste0("Group", sort(unique(data[[group]]))[1]),
+    paste0("Group", sort(unique(data[[group]]))[2]),
     "Difference",
     "95% CI"
   )
@@ -837,7 +837,7 @@ eval_bs_parity <- function(data, outcome, group, probs,
 #' @export
 
 eval_treatment_equality <- function(data, outcome, group, probs, cutoff = 0.5,
-                                    confint = TRUE, bootstraps = 1000,
+                                    confint = TRUE, bootstraps = 2500,
                                     digits = 2, message = TRUE) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
@@ -881,8 +881,8 @@ eval_treatment_equality <- function(data, outcome, group, probs, cutoff = 0.5,
 
   colnames(result_df) <- c(
     "Metric",
-    paste0("Group", unique(data[[group]])[1]),
-    paste0("Group", unique(data[[group]])[2]),
+    paste0("Group", sort(unique(data[[group]]))[1]),
+    paste0("Group", sort(unique(data[[group]]))[2]),
     "Difference",
     "95% CI"
   )
@@ -920,7 +920,7 @@ eval_treatment_equality <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @export
 
 eval_pos_class_bal <- function(data, outcome, group, probs,
-                               confint = TRUE, bootstraps = 1000,
+                               confint = TRUE, bootstraps = 2500,
                                digits = 2, message = TRUE) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
@@ -963,8 +963,8 @@ eval_pos_class_bal <- function(data, outcome, group, probs,
 
   colnames(result_df) <- c(
     "Metric",
-    paste0("Group", unique(data[[group]])[1]),
-    paste0("Group", unique(data[[group]])[2]),
+    paste0("Group", sort(unique(data[[group]]))[1]),
+    paste0("Group", sort(unique(data[[group]]))[2]),
     "Difference",
     "95% CI"
   )
@@ -1002,7 +1002,7 @@ eval_pos_class_bal <- function(data, outcome, group, probs,
 #' @export
 
 eval_neg_class_bal <- function(data, outcome, group, probs,
-                               confint = TRUE, bootstraps = 1000,
+                               confint = TRUE, bootstraps = 2500,
                                digits = 2, message = TRUE) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
@@ -1045,8 +1045,8 @@ eval_neg_class_bal <- function(data, outcome, group, probs,
 
   colnames(result_df) <- c(
     "Metric",
-    paste0("Group", unique(data[[group]])[1]),
-    paste0("Group", unique(data[[group]])[2]),
+    paste0("Group", sort(unique(data[[group]]))[1]),
+    paste0("Group", sort(unique(data[[group]]))[2]),
     "Difference",
     "95% CI"
   )

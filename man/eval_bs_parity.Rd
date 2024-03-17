@@ -10,7 +10,7 @@ eval_bs_parity(
   group,
   probs,
   confint = TRUE,
-  bootstraps = 1000,
+  bootstraps = 2500,
   digits = 2,
   message = TRUE
 )

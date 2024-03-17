@@ -13,7 +13,7 @@ eval_cond_stats_parity(
   probs,
   cutoff = 0.5,
   confint = TRUE,
-  bootstraps = 1000,
+  bootstraps = 2500,
   message = TRUE,
   digits = 2
 )
@@ -40,7 +40,7 @@ the sign of the condition and the value to threshold the continuous variable
 
 \item{confint}{Whether to compute 95\% confidence interval, default is TRUE}
 
-\item{bootstraps}{Number of bootstrap samples, default is 1000}
+\item{bootstraps}{Number of bootstrap samples, default is 2500}
 
 \item{message}{Whether to print the results, default is TRUE}
 
