@@ -64,7 +64,8 @@ get_fpr <- function(data, outcome, group, probs, cutoff = 0.5, digits = 2) {
 
 get_ppr <- function(data, outcome, group, probs, cutoff = 0.5, digits = 2) {
   ppr <- c()
-  for (i in unique(data[, group])) {
+  groups <- sort(unique(data[, group]))
+  for (i in groups) {
     pp <- sum(
       data[, group] == i &
         data[, probs] >= cutoff
@@ -88,7 +89,8 @@ get_ppr <- function(data, outcome, group, probs, cutoff = 0.5, digits = 2) {
 
 get_ppv <- function(data, outcome, group, probs, cutoff = 0.5, digits = 2) {
   ppv <- c()
-  for (i in unique(data[, group])) {
+  groups <- sort(unique(data[, group]))
+  for (i in groups) {
     tp <- sum(data[, outcome] == 1 &
       data[, group] == i &
       data[, probs] >= cutoff)
@@ -112,7 +114,8 @@ get_ppv <- function(data, outcome, group, probs, cutoff = 0.5, digits = 2) {
 
 get_npv <- function(data, outcome, group, probs, cutoff = 0.5, digits = 2) {
   npv <- c()
-  for (i in unique(data[, group])) {
+  groups <- sort(unique(data[, group]))
+  for (i in groups) {
     tn <- sum(data[, outcome] == 0 &
       data[, group] == i &
       data[, probs] < cutoff)
@@ -136,7 +139,8 @@ get_npv <- function(data, outcome, group, probs, cutoff = 0.5, digits = 2) {
 
 get_acc <- function(data, outcome, group, probs, cutoff = 0.5, digits = 2) {
   acc <- c()
-  for (i in unique(data[, group])) {
+  groups <- sort(unique(data[, group]))
+  for (i in groups) {
     tp <- sum(data[, outcome] == 1 &
       data[, group] == i &
       data[, probs] >= cutoff)
@@ -161,7 +165,8 @@ get_acc <- function(data, outcome, group, probs, cutoff = 0.5, digits = 2) {
 
 get_brier_score <- function(data, outcome, group, probs, digits = 2) {
   brier_score <- c()
-  for (i in unique(data[, group])) {
+  groups <- sort(unique(data[, group]))
+  for (i in groups) {
     sub_data <- data[data[, group] == i, ]
     brier_score <- c(brier_score, round(mean((sub_data[, outcome] - sub_data[, probs])^2), digits))
   }
@@ -182,7 +187,8 @@ get_brier_score <- function(data, outcome, group, probs, digits = 2) {
 get_err_ratio <- function(data, outcome, group, probs, cutoff = 0.5,
                           digits = 2) {
   err_ratio <- c()
-  for (i in unique(data[, group])) {
+  groups <- sort(unique(data[, group]))
+  for (i in groups) {
     sub_data <- data[data[, group] == i, ]
     fp <- sum(sub_data[, outcome] == 0 &
       sub_data[, probs] >= cutoff)
@@ -205,7 +211,8 @@ get_err_ratio <- function(data, outcome, group, probs, cutoff = 0.5,
 
 get_avg_prob <- function(data, outcome, group, probs, digits = 2) {
   avg_prob <- c()
-  for (i in unique(data[, group])) {
+  groups <- sort(unique(data[, group]))
+  for (i in groups) {
     sub_data <- data[data[, group] == i, ]
     avg_prob <- c(avg_prob, round(mean(sub_data[, probs]), digits))
   }
