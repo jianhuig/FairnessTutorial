@@ -204,7 +204,7 @@ eval_mean_abs_dev <- function(data, outcome, group, probs, cutoff = 0.5,
   metric <- get_all_metrics(data, outcome, group, probs, cutoff, digits)
 
   # Calculate Mean Absolute Deviation for each metric
-  metric$`Max_abs_dev` <- apply(metric[,-1], 1, function(x) round(stats::mad(x, center = mean(x)), digits))
+  metric$`Mean_abs_dev` <- apply(metric[,-1], 1, function(x) round(stats::mad(x, center = mean(x)), digits))
 
   # Calculate confidence interval
   if (confint) {
