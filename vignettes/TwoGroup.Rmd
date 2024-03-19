@@ -75,7 +75,8 @@ mimic <- mimic %>%
 # Use 700 labels to train the mimic
 train_data <- mimic %>% filter(row_number() <= 700)
 # Fit a random forest model
-rf_model <- randomForest(factor(day_28_flg) ~ ., data = train_data, seed = 123)
+set.seed(123)
+rf_model <- randomForest(factor(day_28_flg) ~ ., data = train_data, ntree = 100)
 
 # Test the model on the remaining data
 test_data <- mimic %>% filter(row_number() > 700)
@@ -97,7 +98,7 @@ We choose threshold = 0.41 so that the overall FPR is around 5%.
 cut_off <- 0.41
 
 test_data %>%
-  mutate(pred = ifelse(pred > 0.41, 1, 0)) %>%
+  mutate(pred = ifelse(pred > cut_off, 1, 0)) %>%
   filter(day_28_flg == 0) %>%
   summarise(fpr = mean(pred))
 ```
