@@ -5,7 +5,7 @@
 #' Evaluate Equal Opportunity Compliance of a Predictive Model
 #'
 #' This function evaluates the equal opportunity compliance of a predictive model
-#' by comparing the True Positive Rates (TPR) across different groups defined by
+#' by comparing the False Negative Rates (FNR) across different groups defined by
 #' a sensitive attribute. It is used to determine if a model exhibits bias
 #' towards any group for binary outcomes.
 #'
@@ -24,11 +24,11 @@
 #' @param message Logical; whether to print summary results to the console; defaults to TRUE.
 #' @return Returns a dataframe with the following columns:
 #' \itemize{
-#'   \item Metric: Describes the metric being reported (TPR for each group, difference).
-#'   \item Group1: True Positive Rate for the first group.
-#'   \item Group2: True Positive Rate for the second group.
-#'   \item Difference: The difference in True Positive Rates between the two groups.
-#'   \item CI: The 95% confidence interval for the TPR difference.
+#'   \item Metric: Describes the metric being reported (FNR for each group, difference).
+#'   \item Group1: False Negative Rate for the first group.
+#'   \item Group2: False Negative Rate for the second group.
+#'   \item Difference: The difference in False Negative Rates between the two groups.
+#'   \item CI: The 95% confidence interval for the FNR difference.
 #' }
 #' @examples
 #' # Example usage:
@@ -46,12 +46,12 @@ eval_eq_opp <- function(data, outcome, group, probs, cutoff = 0.5,
     stop("Outcome must be binary (containing only 0 and 1).")
   }
 
-  tpr <- get_tpr(
+  fnr <- 1 - get_tpr(
     data = data, outcome = outcome, group = group, probs = probs,
     cutoff = cutoff, digits = digits
   )
 
-  tpr_diff <- tpr[[1]] - tpr[[2]]
+  fnr_diff <- fnr[[1]] - fnr[[2]]
 
   # Calculate confidence interval
   se <- replicate(bootstraps, {
@@ -64,22 +64,22 @@ eval_eq_opp <- function(data, outcome, group, probs, cutoff = 0.5,
     )
     data_boot <- rbind(data[group1, ], data[group2, ])
 
-    tpr_boot <- get_tpr(
+    fnr_boot <- 1 - get_tpr(
       data = data_boot, outcome = outcome, group = group,
       probs = probs, cutoff = cutoff
     )
-    return(tpr_boot[[1]] - tpr_boot[[2]])
+    return(fnr_boot[[1]] - fnr_boot[[2]])
   })
 
-  lower_ci <- round(tpr_diff - 1.96 * sd(se), digits)
-  upper_ci <- round(tpr_diff + 1.96 * sd(se), digits)
+  lower_ci <- round(fnr_diff - 1.96 * sd(se), digits)
+  upper_ci <- round(fnr_diff + 1.96 * sd(se), digits)
 
   # Create a dataframe for the results
   results_df <- data.frame(
-    "TPR",
-    tpr[[1]],
-    tpr[[2]],
-    tpr_diff,
+    "FNR",
+    fnr[[1]],
+    fnr[[2]],
+    fnr_diff,
     paste0("[", lower_ci, ", ", upper_ci, "]")
   )
 
@@ -106,7 +106,7 @@ eval_eq_opp <- function(data, outcome, group, probs, cutoff = 0.5,
 #' Examine Equalized Odds of a Predictive Model
 #'
 #' This function examines the equalized odds of a predictive model by comparing
-#' both the True Positive Rates (TPR) and False Positive Rates (FPR) across different
+#' both the False Negative Rates (FNR) and False Positive Rates (FPR) across different
 #' groups defined by a sensitive attribute. It assesses if a model performs unbiasedly
 #' for binary outcomes across these groups, adhering to the equalized odds fairness criterion.
 #'
@@ -124,7 +124,7 @@ eval_eq_opp <- function(data, outcome, group, probs, cutoff = 0.5,
 #' defaults to 2.
 #' @param message Logical; whether to print summary results to the console; defaults to TRUE.
 #' @return Returns a dataframe with the following columns:
-#'   - Metric: Describes the metric being reported (TPR and FPR for each group, difference).
+#'   - Metric: Describes the metric being reported (FNR and FPR for each group, difference).
 #'   - Group1: Rate for the first group.
 #'   - Group2: Rate for the second group.
 #'   - Difference: The difference in rates between the two groups.
@@ -145,7 +145,7 @@ eval_eq_odds <- function(data, outcome, group, probs, cutoff = 0.5,
     stop("Outcome must be binary (containing only 0 and 1).")
   }
 
-  tpr <- get_tpr(
+  fnr <- 1 - get_tpr(
     data = data, outcome = outcome, group = group, probs = probs,
     cutoff = cutoff, digits = digits
   )
@@ -154,7 +154,7 @@ eval_eq_odds <- function(data, outcome, group, probs, cutoff = 0.5,
     cutoff = cutoff, digits = digits
   )
 
-  tpr_diff <- tpr[[1]] - tpr[[2]]
+  fnr_diff <- fnr[[1]] - fnr[[2]]
   fpr_diff <- fpr[[1]] - fpr[[2]]
 
   # Calculate confidence interval
@@ -167,7 +167,7 @@ eval_eq_odds <- function(data, outcome, group, probs, cutoff = 0.5,
     )
     boot_data <- rbind(data[indices1, ], data[indices2, ])
 
-    boot_tpr <- get_tpr(
+    boot_fnr <- 1 - get_tpr(
       data = boot_data, outcome = outcome, group = group, probs = probs,
       cutoff = cutoff, digits = digits
     )
@@ -175,23 +175,23 @@ eval_eq_odds <- function(data, outcome, group, probs, cutoff = 0.5,
       data = boot_data, outcome = outcome, group = group, probs = probs,
       cutoff = cutoff, digits = digits
     )
-    c(boot_tpr[[1]] - boot_tpr[[2]], boot_fpr[[1]] - boot_fpr[[2]])
+    c(boot_fnr[[1]] - boot_fnr[[2]], boot_fpr[[1]] - boot_fpr[[2]])
   })
 
   # Calculate confidence intervals
-  tpr_lower <- round(tpr_diff - 1.96 * sd(se[1, ]), digits)
-  tpr_upper <- round(tpr_diff + 1.96 * sd(se[1, ]), digits)
+  fnr_lower <- round(fnr_diff - 1.96 * sd(se[1, ]), digits)
+  fnr_upper <- round(fnr_diff + 1.96 * sd(se[1, ]), digits)
   fpr_lower <- round(fpr_diff - 1.96 * sd(se[2, ]), digits)
   fpr_upper <- round(fpr_diff + 1.96 * sd(se[2, ]), digits)
 
   # Structure the results as a dataframe
   results_df <- data.frame(
-    Metric = c("TPR", "FPR"),
-    Group1 = c(tpr[[1]], fpr[[1]]),
-    Group2 = c(tpr[[2]], fpr[[2]]),
-    Difference = c(tpr_diff, fpr_diff),
+    Metric = c("FNR", "FPR"),
+    Group1 = c(fnr[[1]], fpr[[1]]),
+    Group2 = c(fnr[[2]], fpr[[2]]),
+    Difference = c(fnr_diff, fpr_diff),
     CI = c(
-      paste0("[", tpr_lower, ", ", tpr_upper, "]"),
+      paste0("[", fnr_lower, ", ", fnr_upper, "]"),
       paste0("[", fpr_lower, ", ", fpr_upper, "]")
     )
   )
@@ -206,7 +206,7 @@ eval_eq_odds <- function(data, outcome, group, probs, cutoff = 0.5,
 
   # Print summary message if desired
   if (message) {
-    if (any(tpr_lower > 0) || any(tpr_upper < 0) || any(fpr_lower > 0) ||
+    if (any(fnr_lower > 0) || any(fnr_upper < 0) || any(fpr_lower > 0) ||
       any(fpr_upper < 0)) {
       cat("There is evidence that model does not satisfy equalized odds.\n")
     } else {
