@@ -45,8 +45,8 @@ get_fpr <- function(data, outcome, group, probs, cutoff = 0.5, digits = 2) {
     fp <- sum(data[, outcome] == 0 &
       data[, group] == i &
       data[, probs] >= cutoff)
-    p <- sum(data[, outcome] == 1 & data[, group] == i)
-    fpr <- c(fpr, round(fp / p, digits))
+    n <- sum(data[, outcome] == 0 & data[, group] == i)
+    fpr <- c(fpr, round(fp /n, digits))
   }
   return(fpr)
 }
@@ -190,11 +190,11 @@ get_err_ratio <- function(data, outcome, group, probs, cutoff = 0.5,
   groups <- sort(unique(data[, group]))
   for (i in groups) {
     sub_data <- data[data[, group] == i, ]
-    fp <- sum(sub_data[, outcome] == 0 &
-      sub_data[, probs] >= cutoff)
-    fn <- sum(sub_data[, outcome] == 1 &
-      sub_data[, probs] < cutoff)
-    err_ratio <- c(err_ratio, round(fn / fp, digits))
+    fpr <- sum(sub_data[, outcome] == 0 &
+      sub_data[, probs] >= cutoff) / sum(sub_data[, outcome] == 0)
+    fnr <- sum(sub_data[, outcome] == 1 &
+      sub_data[, probs] < cutoff) / sum(sub_data[, outcome] == 1)
+    err_ratio <- c(err_ratio, round(fnr / fpr, digits))
   }
   return(err_ratio)
 }

@@ -12,8 +12,8 @@ eval_cond_stats_parity(
   condition,
   probs,
   cutoff = 0.5,
-  confint = TRUE,
   bootstraps = 2500,
+  alpha = 0.05,
   message = TRUE,
   digits = 2
 )
@@ -38,9 +38,9 @@ the sign of the condition and the value to threshold the continuous variable
 
 \item{cutoff}{Threshold for the predicted outcome, default is 0.5}
 
-\item{confint}{Whether to compute 95\% confidence interval, default is TRUE}
-
 \item{bootstraps}{Number of bootstrap samples, default is 2500}
+
+\item{alpha}{The 1 - significance level for the confidence interval, default is 0.05}
 
 \item{message}{Whether to print the results, default is TRUE}
 

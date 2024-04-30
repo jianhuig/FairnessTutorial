@@ -10,7 +10,7 @@ eval_treatment_equality(
   group,
   probs,
   cutoff = 0.5,
-  confint = TRUE,
+  alpha = 0.05,
   bootstraps = 2500,
   digits = 2,
   message = TRUE
@@ -28,13 +28,15 @@ sensitive attribute}
 
 \item{cutoff}{Cutoff value for the predicted probabilities}
 
-\item{confint}{Logical indicating whether to calculate confidence intervals}
+\item{alpha}{The 1 - significance level for the confidence interval, default is 0.05}
 
 \item{bootstraps}{Number of bootstraps to use for confidence intervals}
 
 \item{digits}{Number of digits to round the results to, default is 2}
 
 \item{message}{Whether to print the results, default is TRUE}
+
+\item{confint}{Logical indicating whether to calculate confidence intervals}
 }
 \value{
 A list containing the following elements:

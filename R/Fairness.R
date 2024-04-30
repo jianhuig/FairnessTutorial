@@ -18,7 +18,8 @@
 #' @param cutoff The threshold for converting predicted probabilities into binary
 #' predictions; defaults to 0.5.
 #' @param bootstraps The number of bootstrap samples used for estimating the
-#' confidence interval; defaults to 1000.
+#' confidence interval; defaults to 2500.
+#' @param alpha The 1 - significance level for the confidence interval; defaults to 0.05.
 #' @param digits The number of decimal places to which numerical results are rounded;
 #' defaults to 2.
 #' @param message Logical; whether to print summary results to the console; defaults to TRUE.
@@ -39,7 +40,7 @@
 #' @export
 
 eval_eq_opp <- function(data, outcome, group, probs, cutoff = 0.5,
-                        bootstraps = 2500, digits = 2, message = TRUE) {
+                        bootstraps = 2500, alpha = 0.05, digits = 2, message = TRUE) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
@@ -71,8 +72,8 @@ eval_eq_opp <- function(data, outcome, group, probs, cutoff = 0.5,
     return(fnr_boot[[1]] - fnr_boot[[2]])
   })
 
-  lower_ci <- round(fnr_diff - 1.96 * sd(se), digits)
-  upper_ci <- round(fnr_diff + 1.96 * sd(se), digits)
+  lower_ci <- round(fnr_diff - qnorm(1 - alpha/2) * sd(se), digits)
+  upper_ci <- round(fnr_diff + qnorm(1 - alpha/2) * sd(se), digits)
 
   # Create a dataframe for the results
   results_df <- data.frame(
@@ -120,6 +121,7 @@ eval_eq_opp <- function(data, outcome, group, probs, cutoff = 0.5,
 #' predictions; defaults to 0.5.
 #' @param bootstraps The number of bootstrap samples used for estimating the
 #' uncertainty in the fairness metrics; defaults to 1000.
+#' @param alpha The 1 - significance level for the confidence interval; defaults to 0.05.
 #' @param digits The number of decimal places to which numerical results are rounded;
 #' defaults to 2.
 #' @param message Logical; whether to print summary results to the console; defaults to TRUE.
@@ -138,7 +140,7 @@ eval_eq_opp <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @export
 
 eval_eq_odds <- function(data, outcome, group, probs, cutoff = 0.5,
-                         bootstraps = 2500, digits = 2, message = TRUE) {
+                         bootstraps = 2500, alpha = 0.05, digits = 2, message = TRUE) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
@@ -179,21 +181,20 @@ eval_eq_odds <- function(data, outcome, group, probs, cutoff = 0.5,
   })
 
   # Calculate confidence intervals
-  fnr_lower <- round(fnr_diff - 1.96 * sd(se[1, ]), digits)
-  fnr_upper <- round(fnr_diff + 1.96 * sd(se[1, ]), digits)
-  fpr_lower <- round(fpr_diff - 1.96 * sd(se[2, ]), digits)
-  fpr_upper <- round(fpr_diff + 1.96 * sd(se[2, ]), digits)
+  fnr_lower <- round(fnr_diff - qnorm(1 - alpha/4) * sd(se[1, ]), digits)
+  fnr_upper <- round(fnr_diff + qnorm(1 - alpha/4) * sd(se[1, ]), digits)
+  fpr_lower <- round(fpr_diff - qnorm(1 - alpha/4) * sd(se[2, ]), digits)
+  fpr_upper <- round(fpr_diff + qnorm(1 - alpha/4) * sd(se[2, ]), digits)
 
   # Structure the results as a dataframe
   results_df <- data.frame(
-    Metric = c("FNR", "FPR"),
-    Group1 = c(fnr[[1]], fpr[[1]]),
-    Group2 = c(fnr[[2]], fpr[[2]]),
-    Difference = c(fnr_diff, fpr_diff),
-    CI = c(
-      paste0("[", fnr_lower, ", ", fnr_upper, "]"),
-      paste0("[", fpr_lower, ", ", fpr_upper, "]")
-    )
+    Metric = c("FNR; FPR"),
+    Group1 = paste0(fnr[[1]],"; ", fpr[[1]]),
+    Group2 = paste0(fnr[[2]],"; ",fpr[[2]]),
+    Difference = paste0(fnr_diff,"; ", fpr_diff),
+    CI =
+      paste0("[", fnr_lower, ", ", fnr_upper, "]", "; ",
+      "[", fpr_lower, ", ", fpr_upper, "]")
   )
 
   # Set proper column names, especially for '95% CI' to ensure it displays correctly
@@ -201,7 +202,7 @@ eval_eq_odds <- function(data, outcome, group, probs, cutoff = 0.5,
     "Metric",
     paste0("Group ", sort(unique(data[[group]]))[[1]]),
     paste0("Group ", sort(unique(data[[group]]))[[2]]),
-    "Difference", "95% CI"
+    "Difference", "95% CR"
   )
 
   # Print summary message if desired
@@ -228,6 +229,7 @@ eval_eq_odds <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @param cutoff Threshold for the predicted outcome, default is 0.5
 #' @param confint Whether to compute 95% confidence interval, default is TRUE
 #' @param bootstraps Number of bootstrap samples, default is 2500
+#' @param alpha The 1 - significance level for the confidence interval, default is 0.05
 #' @param digits Number of digits to round the results to, default is 2
 #' @param message Whether to print the results, default is TRUE
 #' @return A list containing the following elements:
@@ -241,7 +243,7 @@ eval_eq_odds <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @export
 
 eval_stats_parity <- function(data, outcome, group, probs, cutoff = 0.5,
-                              confint = TRUE, bootstraps = 2500, digits = 2,
+                              bootstraps = 2500, alpha = 0.05, digits = 2,
                               message = TRUE) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
@@ -272,8 +274,8 @@ eval_stats_parity <- function(data, outcome, group, probs, cutoff = 0.5,
     ppr[[1]] - ppr[[2]]
   })
 
-  lower_ci <- round(ppr_diff - 1.96 * sd(unlist(se)), digits)
-  upper_ci <- round(ppr_diff + 1.96 * sd(unlist(se)), digits)
+  lower_ci <- round(ppr_diff - qnorm(1 - alpha/2) * sd(unlist(se)), digits)
+  upper_ci <- round(ppr_diff + qnorm(1 - alpha/2) * sd(unlist(se)), digits)
 
   # Structure the results as a dataframe
   results_df <- data.frame(
@@ -316,8 +318,8 @@ eval_stats_parity <- function(data, outcome, group, probs, cutoff = 0.5,
 #' (e.g. "<50", ">50", "<=50", ">=50").
 #' @param probs Name of the predicted outcome variable
 #' @param cutoff Threshold for the predicted outcome, default is 0.5
-#' @param confint Whether to compute 95% confidence interval, default is TRUE
 #' @param bootstraps Number of bootstrap samples, default is 2500
+#' @param alpha The 1 - significance level for the confidence interval, default is 0.05
 #' @param digits Number of digits to round the results to, default is 2
 #' @param message Whether to print the results, default is TRUE
 #' @return A list containing the following elements:
@@ -333,8 +335,9 @@ eval_stats_parity <- function(data, outcome, group, probs, cutoff = 0.5,
 
 eval_cond_stats_parity <- function(data, outcome, group,
                                    group2, condition, probs,
-                                   cutoff = 0.5, confint = TRUE,
-                                   bootstraps = 2500, message = TRUE,
+                                   cutoff = 0.5,
+                                   bootstraps = 2500, alpha = 0.05,
+                                   message = TRUE,
                                    digits = 2) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
@@ -356,7 +359,7 @@ eval_cond_stats_parity <- function(data, outcome, group,
       return(
         eval_stats_parity(
           data = subset_data, outcome = outcome, group = group, probs = probs,
-          cutoff = cutoff, confint = confint, bootstraps = bootstraps,
+          cutoff = cutoff, bootstraps = bootstraps, alpha = alpha,
           digits = digits, message = message
         )
       )
@@ -370,7 +373,7 @@ eval_cond_stats_parity <- function(data, outcome, group,
       return(
         eval_stats_parity(
           data = subset_data, outcome = outcome, group = group, probs = probs,
-          cutoff = cutoff, confint = confint, bootstraps = bootstraps,
+          cutoff = cutoff, alpha = alpha, bootstraps = bootstraps,
           digits = digits, message = message
         )
       )
@@ -387,6 +390,7 @@ eval_cond_stats_parity <- function(data, outcome, group,
 #' @param cutoff Threshold for the predicted outcome, default is 0.5
 #' @param confint Whether to compute 95% confidence interval, default is TRUE
 #' @param bootstraps Number of bootstrap samples, default is 2500
+#' @param alpha The 1 - significance level for the confidence interval, default is 0.05
 #' @param digits Number of digits to round the results to, default is 2
 #' @param message Whether to print the results, default is TRUE
 #' @return A list containing the following elements:
@@ -399,8 +403,7 @@ eval_cond_stats_parity <- function(data, outcome, group,
 #'  Value
 #' @export
 
-eval_pred_parity <- function(data, outcome, group, probs, cutoff = 0.5,
-                             confint = TRUE, bootstraps = 2500,
+eval_pred_parity <- function(data, outcome, group, probs, cutoff = 0.5, bootstraps = 2500, alpha = 0.05,
                              digits = 2, message = TRUE) {
   # Check if outcome is binary
   unique_values <- sort(unique(data[[outcome]]))
@@ -429,8 +432,8 @@ eval_pred_parity <- function(data, outcome, group, probs, cutoff = 0.5,
     ppv_boot[[1]] - ppv_boot[[2]]
   })
 
-  lower_ci <- round(ppv_dif - 1.96 * sd(se), digits)
-  upper_ci <- round(ppv_dif + 1.96 * sd(se), digits)
+  lower_ci <- round(ppv_dif - qnorm(1 - alpha/2) * sd(se), digits)
+  upper_ci <- round(ppv_dif + qnorm(1 - alpha/2) * sd(se), digits)
 
   result_df <- data.frame(
     "PPV",
@@ -468,6 +471,7 @@ eval_pred_parity <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @param cutoff Threshold for the predicted outcome, default is 0.5
 #' @param confint Whether to compute 95% confidence interval, default is TRUE
 #' @param bootstraps Number of bootstrap samples, default is 2500
+#' @param alpha The 1 - significance level for the confidence interval, default is 0.05
 #' @param digits Number of digits to round the results to, default is 2
 #' @param message Whether to print the results, default is TRUE
 #' @return A list containing the following elements:
@@ -480,7 +484,7 @@ eval_pred_parity <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @export
 
 eval_pred_equality <- function(data, outcome, group, probs, cutoff = 0.5,
-                               confint = TRUE, bootstraps = 2500,
+                               alpha = 0.05, bootstraps = 2500,
                                digits = 2, message = TRUE) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
@@ -510,8 +514,8 @@ eval_pred_equality <- function(data, outcome, group, probs, cutoff = 0.5,
     fpr_boot[[1]] - fpr_boot[[2]]
   })
 
-  lower_ci <- round(fpr_dif - 1.96 * sd(se), digits)
-  upper_ci <- round(fpr_dif + 1.96 * sd(se), digits)
+  lower_ci <- round(fpr_dif - qnorm(1 - alpha/2) * sd(se), digits)
+  upper_ci <- round(fpr_dif + qnorm(1 - alpha/2) * sd(se), digits)
 
   result_df <- data.frame(
     "FPR",
@@ -550,6 +554,7 @@ eval_pred_equality <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @param cutoff Threshold for the predicted outcome, default is 0.5
 #' @param confint Whether to compute 95% confidence interval, default is TRUE
 #' @param bootstraps Number of bootstrap samples, default is 2500
+#' @param alpha The 1 - significance level for the confidence interval, default is 0.05
 #' @param digits Number of digits to round the results to, default is 2
 #' @param message Whether to print the results, default is TRUE
 #' @return A list containing the following elements:
@@ -569,7 +574,7 @@ eval_pred_equality <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @export
 
 eval_cond_acc_equality <- function(data, outcome, group, probs, cutoff = 0.5,
-                                   confint = TRUE, bootstraps = 2500,
+                                   alpha = 0.05, bootstraps = 2500,
                                    digits = 2, message = TRUE) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
@@ -614,20 +619,19 @@ eval_cond_acc_equality <- function(data, outcome, group, probs, cutoff = 0.5,
     c(ppv_boot[[1]] - ppv_boot[[2]], npv_boot[[1]] - npv_boot[[2]])
   })
 
-  ppv_lower_ci <- round(ppv_diff - 1.96 * sd(se[1, ]), digits)
-  ppv_upper_ci <- round(ppv_diff + 1.96 * sd(se[1, ]), digits)
-  npv_lower_ci <- round(npv_diff - 1.96 * sd(se[2, ]), digits)
-  npv_upper_ci <- round(npv_diff + 1.96 * sd(se[2, ]), digits)
+  ppv_lower_ci <- round(ppv_diff - qnorm(1 - alpha/4) * sd(se[1, ]), digits)
+  ppv_upper_ci <- round(ppv_diff + qnorm(1 - alpha/4) * sd(se[1, ]), digits)
+  npv_lower_ci <- round(npv_diff - qnorm(1 - alpha/4)  * sd(se[2, ]), digits)
+  npv_upper_ci <- round(npv_diff + qnorm(1 - alpha/4)  * sd(se[2, ]), digits)
 
   result_df <- data.frame(
-    c("PPV", "NPV"),
-    c(ppv[[1]], npv[[1]]),
-    c(ppv[[2]], npv[[2]]),
-    c(ppv_diff, npv_diff),
-    c(
-      paste0("[", ppv_lower_ci, ", ", ppv_upper_ci, "]"),
-      paste0("[", npv_lower_ci, ", ", npv_upper_ci, "]")
-    )
+    Metric = c("PPV; NPV"),
+    Group1 = paste0(ppv[[1]],"; ", npv[[1]]),
+    Group2 = paste0(ppv[[2]],"; ",npv[[2]]),
+    Difference = paste0(ppv_diff,"; ", npv_diff),
+    CI =
+      paste0("[", ppv_lower_ci, ", ", ppv_upper_ci, "]", "; ",
+             "[", npv_lower_ci, ", ", npv_upper_ci, "]")
   )
 
   colnames(result_df) <- c(
@@ -661,6 +665,7 @@ eval_cond_acc_equality <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @param cutoff Cutoff value for the predicted probabilities
 #' @param confint Logical indicating whether to calculate confidence intervals
 #' @param bootstraps Number of bootstraps to use for confidence intervals
+#' @param alpha The 1 - significance level for the confidence interval, default is 0.05
 #' @param digits Number of digits to round the results to, default is 2
 #' @param message Whether to print the results, default is TRUE
 #' @return A list containing the following elements:
@@ -673,7 +678,7 @@ eval_cond_acc_equality <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @export
 
 eval_acc_parity <- function(data, outcome, group, probs, cutoff = 0.5,
-                            confint = TRUE, bootstraps = 2500,
+                            alpha = 0.05, bootstraps = 2500,
                             digits = 2, message = TRUE) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
@@ -703,8 +708,8 @@ eval_acc_parity <- function(data, outcome, group, probs, cutoff = 0.5,
     acc_boot[[1]] - acc_boot[[2]]
   })
 
-  lower_ci <- round(acc_diff - 1.96 * sd(se), digits)
-  upper_ci <- round(acc_diff + 1.96 * sd(se), digits)
+  lower_ci <- round(acc_diff - qnorm(1 - alpha/2)  * sd(se), digits)
+  upper_ci <- round(acc_diff + qnorm(1 - alpha/2)  * sd(se), digits)
 
   result_df <- data.frame(
     "Accuracy",
@@ -742,6 +747,7 @@ eval_acc_parity <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @param probs Predicted probabilities
 #' @param confint Logical indicating whether to calculate confidence intervals
 #' @param bootstraps Number of bootstraps to use for confidence intervals
+#' @param alpha The 1 - significance level for the confidence interval, default is 0.05
 #' @param digits Number of digits to round the results to, default is 2
 #' @param message Whether to print the results, default is TRUE
 #' @return A list containing the following elements:
@@ -754,7 +760,7 @@ eval_acc_parity <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @export
 
 eval_bs_parity <- function(data, outcome, group, probs,
-                           confint = TRUE, bootstraps = 2500,
+                           alpha = 0.05, bootstraps = 2500,
                            digits = 2, message = TRUE) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
@@ -784,8 +790,8 @@ eval_bs_parity <- function(data, outcome, group, probs,
     bs_boot[[1]] - bs_boot[[2]]
   })
 
-  lower_ci <- round(bs_diff - 1.96 * sd(se), digits)
-  upper_ci <- round(bs_diff + 1.96 * sd(se), digits)
+  lower_ci <- round(bs_diff - qnorm(1 - alpha/2) * sd(se), digits)
+  upper_ci <- round(bs_diff + qnorm(1 - alpha/2) * sd(se), digits)
 
   result_df <- data.frame(
     "Brier Score",
@@ -825,6 +831,7 @@ eval_bs_parity <- function(data, outcome, group, probs,
 #' @param cutoff Cutoff value for the predicted probabilities
 #' @param confint Logical indicating whether to calculate confidence intervals
 #' @param bootstraps Number of bootstraps to use for confidence intervals
+#' @param alpha The 1 - significance level for the confidence interval, default is 0.05
 #' @param digits Number of digits to round the results to, default is 2
 #' @param message Whether to print the results, default is TRUE
 #' @return A list containing the following elements:
@@ -837,7 +844,7 @@ eval_bs_parity <- function(data, outcome, group, probs,
 #' @export
 
 eval_treatment_equality <- function(data, outcome, group, probs, cutoff = 0.5,
-                                    confint = TRUE, bootstraps = 2500,
+                                    alpha = 0.05, bootstraps = 2500,
                                     digits = 2, message = TRUE) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
@@ -868,8 +875,8 @@ eval_treatment_equality <- function(data, outcome, group, probs, cutoff = 0.5,
   })
   se <- se[!is.infinite(se)]
 
-  lower_ci <- round(err_ratio_diff - 1.96 * sd(se, na.rm = TRUE), digits)
-  upper_ci <- round(err_ratio_diff + 1.96 * sd(se, na.rm = TRUE), digits)
+  lower_ci <- round(err_ratio_diff - qnorm(1 - alpha/2)  * sd(se, na.rm = TRUE), digits)
+  upper_ci <- round(err_ratio_diff + qnorm(1 - alpha/2)  * sd(se, na.rm = TRUE), digits)
 
   result_df <- data.frame(
     "FN/FP Ratio",
@@ -908,6 +915,7 @@ eval_treatment_equality <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @param probs Predicted probabilities
 #' @param confint Logical indicating whether to calculate confidence intervals
 #' @param bootstraps Number of bootstraps to use for confidence intervals
+#' @param alpha The 1 - significance level for the confidence interval, default is 0.05
 #' @param digits Number of digits to round the results to, default is 2
 #' @param message Whether to print the results, default is TRUE
 #' @return A list containing the following elements:
@@ -920,7 +928,7 @@ eval_treatment_equality <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @export
 
 eval_pos_class_bal <- function(data, outcome, group, probs,
-                               confint = TRUE, bootstraps = 2500,
+                               alpha = 0.05, bootstraps = 2500,
                                digits = 2, message = TRUE) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
@@ -950,8 +958,8 @@ eval_pos_class_bal <- function(data, outcome, group, probs,
     avg_prob_boot[[1]] - avg_prob_boot[[2]]
   })
 
-  lower_ci <- round(avg_prob_diff - 1.96 * sd(se, na.rm = TRUE), digits)
-  upper_ci <- round(avg_prob_diff + 1.96 * sd(se, na.rm = TRUE), digits)
+  lower_ci <- round(avg_prob_diff - qnorm(1 - alpha/2)  * sd(se, na.rm = TRUE), digits)
+  upper_ci <- round(avg_prob_diff + qnorm(1 - alpha/2)  * sd(se, na.rm = TRUE), digits)
 
   result_df <- data.frame(
     "Avg. Predicted Prob.",
@@ -990,6 +998,7 @@ eval_pos_class_bal <- function(data, outcome, group, probs,
 #' @param probs Predicted probabilities
 #' @param confint Logical indicating whether to calculate confidence intervals
 #' @param bootstraps Number of bootstraps to use for confidence intervals
+#' @param alpha The 1 - significance level for the confidence interval, default is 0.05
 #' @param digits Number of digits to round the results to, default is 2
 #' @param message Whether to print the results, default is TRUE
 #' @return A list containing the following elements:
@@ -1002,7 +1011,7 @@ eval_pos_class_bal <- function(data, outcome, group, probs,
 #' @export
 
 eval_neg_class_bal <- function(data, outcome, group, probs,
-                               confint = TRUE, bootstraps = 2500,
+                               alpha = 0.05, bootstraps = 2500,
                                digits = 2, message = TRUE) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
@@ -1032,8 +1041,8 @@ eval_neg_class_bal <- function(data, outcome, group, probs,
     avg_prob_boot[[1]] - avg_prob_boot[[2]]
   })
 
-  lower_ci <- round(avg_prob_diff - 1.96 * sd(se, na.rm = TRUE), digits)
-  upper_ci <- round(avg_prob_diff + 1.96 * sd(se, na.rm = TRUE), digits)
+  lower_ci <- round(avg_prob_diff - qnorm(1 - alpha/2)  * sd(se, na.rm = TRUE), digits)
+  upper_ci <- round(avg_prob_diff + qnorm(1 - alpha/2)  * sd(se, na.rm = TRUE), digits)
 
   result_df <- data.frame(
     "Avg. Predicted Prob.",

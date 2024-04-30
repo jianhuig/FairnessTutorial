@@ -11,6 +11,7 @@ eval_eq_odds(
   probs,
   cutoff = 0.5,
   bootstraps = 2500,
+  alpha = 0.05,
   digits = 2,
   message = TRUE
 )
@@ -32,6 +33,8 @@ predictions; defaults to 0.5.}
 \item{bootstraps}{The number of bootstrap samples used for estimating the
 uncertainty in the fairness metrics; defaults to 1000.}
 
+\item{alpha}{The 1 - significance level for the confidence interval; defaults to 0.05.}
+
 \item{digits}{The number of decimal places to which numerical results are rounded;
 defaults to 2.}
 
@@ -40,7 +43,7 @@ defaults to 2.}
 \value{
 Returns a dataframe with the following columns:
 \itemize{
-\item Metric: Describes the metric being reported (TPR and FPR for each group, difference).
+\item Metric: Describes the metric being reported (FNR and FPR for each group, difference).
 \item Group1: Rate for the first group.
 \item Group2: Rate for the second group.
 \item Difference: The difference in rates between the two groups.
@@ -49,7 +52,7 @@ Returns a dataframe with the following columns:
 }
 \description{
 This function examines the equalized odds of a predictive model by comparing
-both the True Positive Rates (TPR) and False Positive Rates (FPR) across different
+both the False Negative Rates (FNR) and False Positive Rates (FPR) across different
 groups defined by a sensitive attribute. It assesses if a model performs unbiasedly
 for binary outcomes across these groups, adhering to the equalized odds fairness criterion.
 }

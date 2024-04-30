@@ -10,8 +10,8 @@ eval_stats_parity(
   group,
   probs,
   cutoff = 0.5,
-  confint = TRUE,
   bootstraps = 2500,
+  alpha = 0.05,
   digits = 2,
   message = TRUE
 )
@@ -28,13 +28,15 @@ sensitive attribute}
 
 \item{cutoff}{Threshold for the predicted outcome, default is 0.5}
 
-\item{confint}{Whether to compute 95\% confidence interval, default is TRUE}
-
 \item{bootstraps}{Number of bootstrap samples, default is 2500}
+
+\item{alpha}{The 1 - significance level for the confidence interval, default is 0.05}
 
 \item{digits}{Number of digits to round the results to, default is 2}
 
 \item{message}{Whether to print the results, default is TRUE}
+
+\item{confint}{Whether to compute 95\% confidence interval, default is TRUE}
 }
 \value{
 A list containing the following elements:

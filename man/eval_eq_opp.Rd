@@ -11,6 +11,7 @@ eval_eq_opp(
   probs,
   cutoff = 0.5,
   bootstraps = 2500,
+  alpha = 0.05,
   digits = 2,
   message = TRUE
 )
@@ -30,7 +31,9 @@ for comparison in the fairness evaluation.}
 predictions; defaults to 0.5.}
 
 \item{bootstraps}{The number of bootstrap samples used for estimating the
-confidence interval; defaults to 1000.}
+confidence interval; defaults to 2500.}
+
+\item{alpha}{The 1 - significance level for the confidence interval; defaults to 0.05.}
 
 \item{digits}{The number of decimal places to which numerical results are rounded;
 defaults to 2.}
@@ -40,16 +43,16 @@ defaults to 2.}
 \value{
 Returns a dataframe with the following columns:
 \itemize{
-\item Metric: Describes the metric being reported (TPR for each group, difference).
-\item Group1: True Positive Rate for the first group.
-\item Group2: True Positive Rate for the second group.
-\item Difference: The difference in True Positive Rates between the two groups.
-\item CI: The 95\% confidence interval for the TPR difference.
+\item Metric: Describes the metric being reported (FNR for each group, difference).
+\item Group1: False Negative Rate for the first group.
+\item Group2: False Negative Rate for the second group.
+\item Difference: The difference in False Negative Rates between the two groups.
+\item CI: The 95\% confidence interval for the FNR difference.
 }
 }
 \description{
 This function evaluates the equal opportunity compliance of a predictive model
-by comparing the True Positive Rates (TPR) across different groups defined by
+by comparing the False Negative Rates (FNR) across different groups defined by
 a sensitive attribute. It is used to determine if a model exhibits bias
 towards any group for binary outcomes.
 }
