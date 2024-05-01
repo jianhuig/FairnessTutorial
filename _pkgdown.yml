@@ -2,3 +2,21 @@ url: https://jianhuig.github.io/FairnessTutorial/
 template:
   bootstrap: 5
 
+navbar:
+  structure:
+    left: ["intro", "casestudy", "reference"]
+    right: ["search"]
+  components:
+    intro:
+      text: "Intro"
+      href: index.html
+    casestudy:
+      text: "Real Data Example"
+      menu:
+      - text: "Binary Protected Attributes"
+        href: articles/TwoGroup.html
+      - text: "Categorical Protected Attributes"
+        href: articles/MultiGroup.html
+
+
+

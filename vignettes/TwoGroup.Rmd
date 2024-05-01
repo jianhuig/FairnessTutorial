@@ -1,8 +1,8 @@
 ---
-title: "Two Group Fairness Tutorial"
+title: "Binary Protected Attributes"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Two Group Fairness Tutorial}
+  %\VignetteIndexEntry{Binary Protected Attributes}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -76,7 +76,7 @@ mimic <- mimic %>%
 train_data <- mimic %>% filter(row_number() <= 700)
 # Fit a random forest model
 set.seed(123)
-rf_model <- randomForest(factor(day_28_flg) ~ ., data = train_data, ntree = 100)
+rf_model <- randomForest(factor(day_28_flg) ~ ., data = train_data, ntree = 1000)
 
 # Test the model on the remaining data
 test_data <- mimic %>% filter(row_number() > 700)

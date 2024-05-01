@@ -14,13 +14,13 @@
 #' @noRd
 
 get_tpr <- function(data, outcome, group, probs, cutoff = 0.5, digits = 2) {
-  tpr <- c()  # Initialize empty vector for true positive rates
-  groups <- sort(unique(data[, group]))  # Get sorted unique groups
+  tpr <- c() # Initialize empty vector for true positive rates
+  groups <- sort(unique(data[, group])) # Get sorted unique groups
 
   for (i in groups) {
     tp <- sum(data[, outcome] == 1 & data[, group] == i & data[, probs] >= cutoff)
     p <- sum(data[, outcome] == 1 & data[, group] == i)
-    tpr <- c(tpr, round(tp / p, digits))  # Calculate TPR and add to vector
+    tpr <- c(tpr, round(tp / p, digits)) # Calculate TPR and add to vector
   }
 
   return(tpr)
@@ -46,7 +46,7 @@ get_fpr <- function(data, outcome, group, probs, cutoff = 0.5, digits = 2) {
       data[, group] == i &
       data[, probs] >= cutoff)
     n <- sum(data[, outcome] == 0 & data[, group] == i)
-    fpr <- c(fpr, round(fp /n, digits))
+    fpr <- c(fpr, round(fp / n, digits))
   }
   return(fpr)
 }
@@ -190,11 +190,11 @@ get_err_ratio <- function(data, outcome, group, probs, cutoff = 0.5,
   groups <- sort(unique(data[, group]))
   for (i in groups) {
     sub_data <- data[data[, group] == i, ]
-    fpr <- sum(sub_data[, outcome] == 0 &
-      sub_data[, probs] >= cutoff) / sum(sub_data[, outcome] == 0)
-    fnr <- sum(sub_data[, outcome] == 1 &
-      sub_data[, probs] < cutoff) / sum(sub_data[, outcome] == 1)
-    err_ratio <- c(err_ratio, round(fnr / fpr, digits))
+    fp <- sum(sub_data[, outcome] == 0 &
+      sub_data[, probs] >= cutoff)
+    fn <- sum(sub_data[, outcome] == 1 &
+      sub_data[, probs] < cutoff)
+    err_ratio <- c(err_ratio, round(fn / fp, digits))
   }
   return(err_ratio)
 }
@@ -254,7 +254,7 @@ get_all_metrics <- function(data, outcome, group, probs, cutoff = 0.5, digits = 
 
   # Convert row names to a column 'Metric'
   all_metrics_df <- data.frame(Metric = rownames(all_metrics_df), all_metrics_df, check.names = FALSE, stringsAsFactors = FALSE)
-  rownames(all_metrics_df) <- NULL  # Reset row names
+  rownames(all_metrics_df) <- NULL # Reset row names
 
   return(all_metrics_df)
 }

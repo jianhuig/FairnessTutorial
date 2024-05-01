@@ -22,12 +22,6 @@
     <loc>https://jianhuig.github.io/FairnessTutorial/index.html</loc>
   </url>
   <url>
-    <loc>https://jianhuig.github.io/FairnessTutorial/reference/equal_opportunity.html</loc>
-  </url>
-  <url>
-    <loc>https://jianhuig.github.io/FairnessTutorial/reference/equalized_odds.html</loc>
-  </url>
-  <url>
     <loc>https://jianhuig.github.io/FairnessTutorial/reference/eval_acc_parity.html</loc>
   </url>
   <url>
@@ -83,12 +77,6 @@
   </url>
   <url>
     <loc>https://jianhuig.github.io/FairnessTutorial/reference/get_all_metrics.html</loc>
-  </url>
-  <url>
-    <loc>https://jianhuig.github.io/FairnessTutorial/reference/get_fpr.html</loc>
-  </url>
-  <url>
-    <loc>https://jianhuig.github.io/FairnessTutorial/reference/get_tpr.html</loc>
   </url>
   <url>
     <loc>https://jianhuig.github.io/FairnessTutorial/reference/index.html</loc>

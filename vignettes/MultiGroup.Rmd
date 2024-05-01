@@ -1,8 +1,8 @@
 ---
-title: "MultiGroup"
+title: "Categorical Protected Attributes"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{MultiGroup}
+  %\VignetteIndexEntry{Categorical Protected Attributes}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -14,7 +14,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup}
+```{r setup, message=FALSE, warning=FALSE}
 library(FairnessTutorial)
 library(PheCAP)
 library(dplyr)

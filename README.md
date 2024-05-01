@@ -1,10 +1,10 @@
 # FairnessTutorial
 
-R package for Fairness Tutorial
+R package and reproducible real-world data examples for Fairness Tutorial
 
 
 # Installation
 
-```{R, eval = FALSE}
+```r
 devtools::install_github(repo = "https://github.com/jianhuig/FairnessTutorial")
 ```
