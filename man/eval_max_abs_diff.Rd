@@ -4,16 +4,7 @@
 \alias{eval_max_abs_diff}
 \title{Examine max absolute difference of a model}
 \usage{
-eval_max_abs_diff(
-  data,
-  outcome,
-  group,
-  probs,
-  cutoff = 0.5,
-  confint = TRUE,
-  bootstraps = 1000,
-  digits = 2
-)
+eval_max_abs_diff(data, outcome, group, probs, cutoff = 0.5, digits = 2)
 }
 \arguments{
 \item{data}{Data frame containing the outcome, predicted outcome, and
@@ -27,10 +18,6 @@ group}
 
 \item{cutoff}{Threshold for the predicted outcome, default is 0.5}
 
-\item{confint}{Whether to compute 95\% confidence interval, default is TRUE}
-
-\item{bootstraps}{Number of bootstrap samples, default is 1000}
-
 \item{digits}{Number of digits to round the results to, default is 2}
 }
 \value{
@@ -39,9 +26,6 @@ A data frame containing the following elements:
 \item Metric: The names of the metrics calculated.
 \item Values for each group.
 \item Max_abs_diff: The maximum absolute difference for the model
-If confidence intervals are computed (\code{confint = TRUE}):
-\item 95\% CI: A string providing the lower and upper bounds of the 95\%
-confidence interval for the maximum absolute difference.
 }
 }
 \description{
