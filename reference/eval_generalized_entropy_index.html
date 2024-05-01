@@ -65,8 +65,6 @@ performance metrics across different groups.</p>
 <span>  <span class="va">probs</span>,</span>
 <span>  alpha <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>  cutoff <span class="op">=</span> <span class="fl">0.5</span>,</span>
-<span>  confint <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  bootstraps <span class="op">=</span> <span class="fl">1000</span>,</span>
 <span>  digits <span class="op">=</span> <span class="fl">2</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -94,14 +92,6 @@ group</p></dd>
 <dd><p>Threshold for the predicted outcome, default is 0.5</p></dd>
 
 
-<dt>confint</dt>
-<dd><p>Whether to compute 95% confidence interval, default is TRUE</p></dd>
-
-
-<dt>bootstraps</dt>
-<dd><p>Number of bootstrap samples, default is 1000</p></dd>
-
-
 <dt>digits</dt>
 <dd><p>Number of digits to round the results to, default is 2</p></dd>
 
@@ -112,10 +102,7 @@ group</p></dd>
 
 <p>A data frame containing the following elements:</p><ul><li><p>Metric: The names of the metrics calculated.</p></li>
 <li><p>Values for each group.</p></li>
-<li><p>Generalized_entropy_index: The generalized entropy index for the model
-If confidence intervals are computed (<code>confint = TRUE</code>):</p></li>
-<li><p>95% CI: A string providing the lower and upper bounds of the 95%
-confidence interval for the generalized entropy index.</p></li>
+<li><p>Generalized_entropy_index: The generalized entropy index for the model</p></li>
 </ul></div>
 
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
