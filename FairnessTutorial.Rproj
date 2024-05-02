@@ -18,5 +18,6 @@ LineEndingConversion: Posix
 
 BuildType: Package
 PackageUseDevtools: Yes
+PackagePath: /Users/jianhuigao/Documents/Documents - Jianhui’s MacBook Pro - 1/GitHub/FairnessTutorial
 PackageInstallArgs: --no-multiarch --with-keep.source
 PackageRoxygenize: rd,collate,namespace
