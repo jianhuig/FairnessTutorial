@@ -98,25 +98,11 @@ We will use hu_group as the protected attribute
 ```{r}
 # Categorize the group
 test <- test %>%
-  mutate(
-    hu_group =
-      ifelse(HU_group == 1, paste0("0 to ", quantile(data$healthcare_utilization, 0.25)),
-        ifelse(HU_group == 2, paste0(
-          quantile(data$healthcare_utilization, 0.25),
-          " to ", quantile(data$healthcare_utilization, 0.5)
-        ),
-        ifelse(HU_group == 3, paste0(
-          quantile(data$healthcare_utilization, 0.5),
-          " to ", quantile(data$healthcare_utilization, 0.75)
-        ),
-        paste0(
-          quantile(data$healthcare_utilization, 0.75), " to ",
-          quantile(data$healthcare_utilization, 1)
-        )
-        )
-        )
-      )
-  )
+  mutate(hu_group = ifelse(HU_group == 1, paste0("0 to ", quantile(data$healthcare_utilization, 0.25)),
+    ifelse(HU_group == 2, paste0(quantile(data$healthcare_utilization, 0.25), " to ", quantile(data$healthcare_utilization, 0.5)),
+      ifelse(HU_group == 3, paste0(quantile(data$healthcare_utilization, 0.5), " to ", quantile(data$healthcare_utilization, 0.75)), paste0(quantile(data$healthcare_utilization, 0.75), " to ", quantile(data$healthcare_utilization, 1)))
+    )
+  ))
 
 # The dataframe would need predictions, outcome, HU_group
 test <- test %>% select(outcome, pred, HU_group)

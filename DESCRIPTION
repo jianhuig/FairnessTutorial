@@ -1,16 +1,9 @@
 Package: FairnessTutorial
-Title: A tutorial on fairness of machine learning models in healthcare
-Version: 1.0.0
+Title: What the Package Does (One Line, Title Case)
+Version: 0.0.0.9000
 Authors@R: 
-    c(
-    person("Jianhui", "Gao", email = "jianhui.gao@mail.utoronto.ca", role = c("aut", "cre")),
-    person("Benson", "Chou", email = "benson.chou@mail.utoronto.ca", role = c("aut")),
-    person("Jessica", "Gronsbell", email = "j.gronsbell@utoronto.ca", role = c("aut"))
-    )
-Description: Functions to evaluate various fairness metrics along with a confidence
-    interval. The package also provides a tutorial using real-world data to demonstrate
-    how to evaluate fairness of machine learning models in healthcare. The tutorial is
-    available at <https://jianhuig.github.io/FairnessTutorial/>.
+    person("Jianhui", "Gao", , "jianhui.gao@mail.utoronto.ca", role = c("aut", "cre"))
+Description: What the package does (one paragraph).
 Imports:
   dplyr,
   magrittr
