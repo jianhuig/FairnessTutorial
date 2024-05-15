@@ -137,7 +137,6 @@ eval_eq_opp <- function(data, outcome, group, probs, cutoff = 0.5,
 #'   data = your_data, outcome = "actual_outcome",
 #'   group = "sensitive_attribute", probs = "predicted_probs"
 #' )
-#' @export
 
 eval_eq_odds <- function(data, outcome, group, probs, cutoff = 0.5,
                          bootstraps = 2500, alpha = 0.05, digits = 2, message = TRUE) {
@@ -571,7 +570,6 @@ eval_pred_equality <- function(data, outcome, group, probs, cutoff = 0.5,
 #' - NPV_Diff_CI: A vector of length 2 containing the lower and upper bounds
 #' of the 95% confidence interval for the difference in Negative Predictive
 #' Value
-#' @export
 
 eval_cond_acc_equality <- function(data, outcome, group, probs, cutoff = 0.5,
                                    alpha = 0.05, bootstraps = 2500,

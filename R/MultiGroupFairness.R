@@ -22,7 +22,6 @@
 #' @import dplyr
 #' @importFrom magrittr %>%
 #' @importFrom stats quantile
-#' @export
 
 eval_max_min_diff <- function(data, outcome, group, probs, cutoff = 0.5, digits = 2) {
   metric <- get_all_metrics(data, outcome, group, probs, cutoff, digits)
@@ -53,7 +52,6 @@ eval_max_min_diff <- function(data, outcome, group, probs, cutoff = 0.5, digits 
 #' @import dplyr
 #' @importFrom magrittr %>%
 #' @importFrom stats quantile
-#' @export
 
 eval_max_min_ratio <- function(data, outcome, group, probs, cutoff = 0.5,
                                digits = 2){
@@ -84,7 +82,6 @@ eval_max_min_ratio <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @import dplyr
 #' @importFrom magrittr %>%
 #' @importFrom stats quantile
-#' @export
 
 eval_max_abs_diff <- function(data, outcome, group, probs, cutoff = 0.5,
                               digits = 2){
@@ -117,7 +114,6 @@ eval_max_abs_diff <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @importFrom magrittr %>%
 #' @importFrom stats quantile
 #' @importFrom stats mad
-#' @export
 
 eval_mean_abs_dev <- function(data, outcome, group, probs, cutoff = 0.5,
                               digits = 2){
@@ -150,7 +146,6 @@ eval_mean_abs_dev <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @importFrom magrittr %>%
 #' @importFrom stats quantile
 #' @importFrom stats var
-#' @export
 
 eval_variance <- function(data, outcome, group, probs, cutoff = 0.5,
                           digits = 2){
@@ -182,7 +177,6 @@ eval_variance <- function(data, outcome, group, probs, cutoff = 0.5,
 #' @import dplyr
 #' @importFrom magrittr %>%
 #' @importFrom stats quantile
-#' @export
 
 eval_generalized_entropy_index <- function(data, outcome, group, probs,
                                            alpha = 2,cutoff = 0.5, digits = 2){
