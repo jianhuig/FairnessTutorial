@@ -2,9 +2,8 @@ pandoc: 3.1.11
 pkgdown: 2.0.9
 pkgdown_sha: ~
 articles:
-  MultiGroup: MultiGroup.html
   TwoGroup: TwoGroup.html
-last_built: 2024-05-15T06:14Z
+last_built: 2024-05-15T06:19Z
 urls:
   reference: https://jianhuig.github.io/FairnessTutorial/reference
   article: https://jianhuig.github.io/FairnessTutorial/articles
