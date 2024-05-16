@@ -22,14 +22,15 @@
 #' @param alpha The 1 - significance level for the confidence interval; defaults to 0.05.
 #' @param digits The number of decimal places to which numerical results are rounded;
 #' defaults to 2.
+#' @param differnce Logical; whether to return FNR difference or ratio
 #' @param message Logical; whether to print summary results to the console; defaults to TRUE.
 #' @return Returns a dataframe with the following columns:
 #' \itemize{
 #'   \item Metric: Describes the metric being reported (FNR for each group, difference).
 #'   \item Group1: False Negative Rate for the first group.
 #'   \item Group2: False Negative Rate for the second group.
-#'   \item Difference: The difference in False Negative Rates between the two groups.
-#'   \item CI: The 95% confidence interval for the FNR difference.
+#'   \item Difference/Ratio: The difference or ratio in False Negative Rates between the two groups.
+#'   \item CI: The 95% confidence interval for the FNR difference/ratio.
 #' }
 #' @examples
 #' # Example usage:
@@ -40,7 +41,8 @@
 #' @export
 
 eval_eq_opp <- function(data, outcome, group, probs, cutoff = 0.5,
-                        bootstraps = 2500, alpha = 0.05, digits = 2, message = TRUE) {
+                        bootstraps = 2500, alpha = 0.05, digits = 2,
+                        difference = TRUE, message = TRUE) {
   # Check if outcome is binary
   unique_values <- unique(data[[outcome]])
   if (!(length(unique_values) == 2 && all(unique_values %in% c(0, 1)))) {
@@ -53,8 +55,9 @@ eval_eq_opp <- function(data, outcome, group, probs, cutoff = 0.5,
   )
 
   fnr_diff <- fnr[[1]] - fnr[[2]]
+  fnr_ratio <- fnr[[2]] / fnr[[1]]
 
-  # Calculate confidence interval
+  # Calculate difference confidence interval
   se <- replicate(bootstraps, {
     # Bootstrap within each group
     group1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
@@ -72,23 +75,63 @@ eval_eq_opp <- function(data, outcome, group, probs, cutoff = 0.5,
     return(fnr_boot[[1]] - fnr_boot[[2]])
   })
 
-  lower_ci <- round(fnr_diff - qnorm(1 - alpha/2) * sd(se), digits)
-  upper_ci <- round(fnr_diff + qnorm(1 - alpha/2) * sd(se), digits)
+  # Calculate ratio condience interval
+  ratio_se <- replicate(bootstraps, {
+    # Bootstrap within each group
+    group1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
+                     replace = TRUE
+    )
+    group2 <- sample(which(data[[group]] == unique(data[[group]])[2]),
+                     replace = TRUE
+    )
+    data_boot <- rbind(data[group1, ], data[group2, ])
 
-  # Create a dataframe for the results
-  results_df <- data.frame(
-    "FNR",
-    fnr[[1]],
-    fnr[[2]],
-    fnr_diff,
-    paste0("[", lower_ci, ", ", upper_ci, "]")
-  )
+    fnr_boot <- 1 - get_tpr(
+      data = data_boot, outcome = outcome, group = group,
+      probs = probs, cutoff = cutoff
+    )
+    return(log(fnr_boot[[2]]/fnr_boot[[1]]))
+  })
 
-  colnames(results_df) <- c(
-    "Metric", paste0("Group", sort(unique(data[[group]]))[[1]]),
-    paste0("Group", sort(unique(data[[group]]))[[2]]),
-    "Difference", "95% CI"
-  )
+
+  if(difference){
+    lower_ci <- round(fnr_diff - qnorm(1 - alpha/2) * sd(se), digits)
+    upper_ci <- round(fnr_diff + qnorm(1 - alpha/2) * sd(se), digits)
+
+    # Create a dataframe for the results
+    results_df <- data.frame(
+      "FNR",
+      fnr[[1]],
+      fnr[[2]],
+      fnr_diff,
+      paste0("[", lower_ci, ", ", upper_ci, "]")
+    )
+
+    colnames(results_df) <- c(
+      "Metric", paste0("Group", sort(unique(data[[group]]))[[1]]),
+      paste0("Group", sort(unique(data[[group]]))[[2]]),
+      "Difference", "95% CI"
+    )
+  } else {
+    lower_ci <- round(exp(log(fnr_ratio) - 1.96 * sd(ratio_se)), digits)
+    upper_ci <- round(exp(log(fnr_ratio) + 1.96 * sd(ratio_se)), digits)
+
+    # Create a dataframe for the results
+    results_df <- data.frame(
+      "FNR",
+      fnr[[1]],
+      fnr[[2]],
+      fnr_ratio,
+      paste0("[", lower_ci, ", ", upper_ci, "]")
+    )
+
+    colnames(results_df) <- c(
+      "Metric", paste0("Group", sort(unique(data[[group]]))[[1]]),
+      paste0("Group", sort(unique(data[[group]]))[[2]]),
+      "Ratio", "95% CI"
+    )
+  }
+
 
   # Print message if desired
   if (message) {
