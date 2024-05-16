@@ -28,8 +28,10 @@
 #'   \item Metric: Describes the metric being reported (FNR for each group, difference).
 #'   \item Group1: False Negative Rate for the first group.
 #'   \item Group2: False Negative Rate for the second group.
-#'   \item Difference/Ratio: The difference or ratio in False Negative Rates between the two groups.
-#'   \item CI: The 95% confidence interval for the FNR difference/ratio.
+#'   \item Difference: The difference in False Negative Rates between the two groups.
+#'   \item Difference CI: The 95% confidence interval for the FNR difference.
+#'   \item Ratio: The ratio in False Negative Rates between the two groups.
+#'   \item Ratio CI: The 95% confidence interval for the FNR ratio
 #' }
 #' @examples
 #' # Example usage:
@@ -137,7 +139,9 @@ eval_eq_opp <- function(data, outcome, group, probs, cutoff = 0.5,
 #'   - Group1: Rate for the first group.
 #'   - Group2: Rate for the second group.
 #'   - Difference: The difference in rates between the two groups.
-#'   - 95% CI: The 95% confidence interval for the rate difference。
+#'   - 95% Difference CI: The 95% confidence interval for the rate difference.
+#'   - Ratio: The ratio in False Negative Rates between the two groups.
+#'   - 95% Ratio CI: The 95% confidence interval for the FNR ratio
 #' @examples
 #' # Example usage:
 #' eval_eq_odds(
@@ -242,9 +246,13 @@ eval_eq_odds <- function(data, outcome, group, probs, cutoff = 0.5,
 #'   - PPR_Group1: Positive Prediction Rate for the first group
 #'   - PPR_Group2: Positive Prediction Rate for the second group
 #'   - PPR_Diff: Difference in Positive Prediction Rate
+#'   - PPR_Ratio: The ratio in Positive Prediction Rate between the two groups.
 #'   If confidence intervals are computed (`confint = TRUE`):
 #'   - PPR_Diff_CI: A vector of length 2 containing the lower and upper bounds
 #'   of the 95% confidence interval for the difference in Positive Prediction
+#'   Rate
+#'   - PPR_Ratio_CI: A vector of length 2 containing the lower and upper bounds
+#'   of the 95% confidence interval for the ratio in Positive Prediction
 #'   Rate
 #' @export
 
@@ -338,9 +346,13 @@ eval_stats_parity <- function(data, outcome, group, probs, cutoff = 0.5,
 #'  - PPR_Group1: Positive Prediction Rate for the first group
 #'  - PPR_Group2: Positive Prediction Rate for the second group
 #'  - PPR_Diff: Difference in Positive Prediction Rate
+#'  - PPR_Ratio: Ratio in Positive Prediction Rate
 #'  If confidence intervals are computed (`confint = TRUE`):
 #'  - PPR_Diff_CI: A vector of length 2 containing the lower and upper bounds
 #'  of the 95% confidence interval for the difference in Positive Prediction
+#'  Rate
+#'  - PPR_Ratio_CI: A vector of length 2 containing the lower and upper bounds
+#'  of the 95% confidence interval for the ratio in Positive Prediction
 #'  Rate
 #' @export
 
@@ -408,10 +420,15 @@ eval_cond_stats_parity <- function(data, outcome, group,
 #'  - PPV_Group1: Positive Predictive Value for the first group
 #'  - PPV_Group2: Positive Predictive Value for the second group
 #'  - PPV_Diff: Difference in Positive Predictive Value
+#'  - PPV_Ratio: Ratio in Positive Predictive Value
 #'  If confidence intervals are computed (`confint = TRUE`):
 #'  - PPV_Diff_CI: A vector of length 2 containing the lower and upper bounds
 #'  of the 95% confidence interval for the difference in Positive Predictive
 #'  Value
+#'  - PPV_Ratio_CI: A vector of length 2 containing the lower and upper bounds
+#'  of the 95% confidence interval for the ratio in Positive Predictive
+#'  Value
+#'
 #' @export
 
 eval_pred_parity <- function(data, outcome, group, probs, cutoff = 0.5, bootstraps = 2500, alpha = 0.05,
@@ -496,9 +513,12 @@ eval_pred_parity <- function(data, outcome, group, probs, cutoff = 0.5, bootstra
 #' - FPR_Group1: False Positive Rate for the first group
 #' - FPR_Group2: False Positive Rate for the second group
 #' - FPR_Diff: Difference in False Positive Rate
+#' - FPR_Ratio: Ratio in False Positive Rate
 #' If confidence intervals are computed (`confint = TRUE`):
 #' - FPR_Diff_CI: A vector of length 2 containing the lower and upper bounds
 #' of the 95% confidence interval for the difference in False Positive Rate
+#' - FPR_Ratio_CI: A vector of length 2 containing the lower and upper bounds
+#' of the 95% confidence interval for the ratio in False Positive Rate
 #' @export
 
 eval_pred_equality <- function(data, outcome, group, probs, cutoff = 0.5,
@@ -696,9 +716,12 @@ eval_cond_acc_equality <- function(data, outcome, group, probs, cutoff = 0.5,
 #' - Accuracy for Group 1
 #' - Accuracy for Group 2
 #' - Difference in accuracy
+#' - Ratio in accuracy
 #' If confidence intervals are computed (`confint = TRUE`):
 #' - A vector of length 2 containing the lower and upper bounds of the 95%
 #' confidence interval for the difference in accuracy
+#' - A vector of length 2 containing the lower and upper bounds of the 95%
+#' confidence interval for the ratio in accuracy
 #' @export
 
 eval_acc_parity <- function(data, outcome, group, probs, cutoff = 0.5,
@@ -785,9 +808,12 @@ eval_acc_parity <- function(data, outcome, group, probs, cutoff = 0.5,
 #' - Brier Score for Group 1
 #' - Brier Score for Group 2
 #' - Difference in Brier Score
+#' - Ratio in Brier Score
 #' If confidence intervals are computed (`confint = TRUE`):
 #' - A vector of length 2 containing the lower and upper bounds of the 95%
 #' confidence interval for the difference in Brier Score
+#' - A vector of length 2 containing the lower and upper bounds of the 95%
+#' confidence interval for the ratio in Brier Score
 #' @export
 
 eval_bs_parity <- function(data, outcome, group, probs,
@@ -876,9 +902,12 @@ eval_bs_parity <- function(data, outcome, group, probs,
 #' - False Negative / False Positive ratio for Group 1
 #' - False Negative / False Positive ratio for Group 2
 #' - Difference in False Negative / False Positive ratio
+#' - Ratio in False Negative / False Positive ratio
 #' If confidence intervals are computed (`confint = TRUE`):
 #' - A vector of length 2 containing the lower and upper bounds of the 95%
 #' confidence interval for the difference in False Negative / False Positive ratio
+#' - A vector of length 2 containing the lower and upper bounds of the 95%
+#' confidence interval for the ratio in False Negative / False Positive ratio
 #' @export
 
 eval_treatment_equality <- function(data, outcome, group, probs, cutoff = 0.5,
@@ -968,9 +997,12 @@ eval_treatment_equality <- function(data, outcome, group, probs, cutoff = 0.5,
 #' - Average predicted probability for Group 1
 #' - Average predicted probability for Group 2
 #' - Difference in average predicted probability
+#' - Ratio in average predicted probability
 #' If confidence intervals are computed (`confint = TRUE`):
 #' - A vector of length 2 containing the lower and upper bounds of the 95%
 #' confidence interval for the difference in average predicted probability
+#' - A vector of length 2 containing the lower and upper bounds of the 95%
+#' confidence interval for the ratio in average predicted probability
 #' @export
 
 eval_pos_class_bal <- function(data, outcome, group, probs,
@@ -1059,9 +1091,12 @@ eval_pos_class_bal <- function(data, outcome, group, probs,
 #' - Average predicted probability for Group 1
 #' - Average predicted probability for Group 2
 #' - Difference in average predicted probability
+#' - Ratio in average predicted probability
 #' If confidence intervals are computed (`confint = TRUE`):
 #' - A vector of length 2 containing the lower and upper bounds of the 95%
 #' confidence interval for the difference in average predicted probability
+#' - A vector of length 2 containing the lower and upper bounds of the 95%
+#' confidence interval for the ratio in average predicted probability
 #' @export
 
 eval_neg_class_bal <- function(data, outcome, group, probs,
