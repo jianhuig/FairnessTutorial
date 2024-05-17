@@ -106,13 +106,13 @@ test_data %>%
 ## Equal Opportunity
 
 ```{r}
-# eval_eq_opp(
-#   dat = test_data,
-#   outcome = "day_28_flg",
-#   group = "gender",
-#   probs = "pred",
-#   cutoff = cut_off
-# )
+eval_eq_opp(
+  dat = test_data,
+  outcome = "day_28_flg",
+  group = "gender",
+  probs = "pred",
+  cutoff = cut_off
+)
 ```
 
 ## Equalized Odds
