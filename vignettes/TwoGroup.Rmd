@@ -111,8 +111,7 @@ eval_eq_opp(
   outcome = "day_28_flg",
   group = "gender",
   probs = "pred",
-  cutoff = cut_off, 
-  difference =TRUE
+  cutoff = cut_off
 )
 ```
 

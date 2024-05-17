@@ -49,9 +49,6 @@ eval_eq_opp <- function(data, outcome, group, probs, cutoff = 0.5,
     stop("Outcome must be binary (containing only 0 and 1).")
   }
 
-  if(difference){
-
-  }
   fnr <- 1 - get_tpr(
     data = data, outcome = outcome, group = group, probs = probs,
     cutoff = cutoff, digits = digits
