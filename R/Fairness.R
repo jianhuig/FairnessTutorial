@@ -256,7 +256,7 @@ eval_eq_odds <- function(data, outcome, group, probs, cutoff = 0.5,
 #'   Rate
 #' @export
 
-eval_stats_parity <- function(data, outcome, group, probs, cutoff = 0.5,
+eval_stats_parity <- function(data, outcome, group, probs, cutoff = 0.5, confint = TRUE,
                               bootstraps = 2500, alpha = 0.05, digits = 2,
                               message = TRUE) {
   # Check if outcome is binary
@@ -431,7 +431,8 @@ eval_cond_stats_parity <- function(data, outcome, group,
 #'
 #' @export
 
-eval_pred_parity <- function(data, outcome, group, probs, cutoff = 0.5, bootstraps = 2500, alpha = 0.05,
+eval_pred_parity <- function(data, outcome, group, probs, cutoff = 0.5, confint = TRUE,
+                             bootstraps = 2500, alpha = 0.05,
                              digits = 2, message = TRUE) {
   # Check if outcome is binary
   unique_values <- sort(unique(data[[outcome]]))
@@ -521,7 +522,7 @@ eval_pred_parity <- function(data, outcome, group, probs, cutoff = 0.5, bootstra
 #' of the 95% confidence interval for the ratio in False Positive Rate
 #' @export
 
-eval_pred_equality <- function(data, outcome, group, probs, cutoff = 0.5,
+eval_pred_equality <- function(data, outcome, group, probs, cutoff = 0.5, confint = TRUE,
                                alpha = 0.05, bootstraps = 2500,
                                digits = 2, message = TRUE) {
   # Check if outcome is binary
@@ -617,7 +618,7 @@ eval_pred_equality <- function(data, outcome, group, probs, cutoff = 0.5,
 #' of the 95% confidence interval for the difference in Negative Predictive
 #' Value
 
-eval_cond_acc_equality <- function(data, outcome, group, probs, cutoff = 0.5,
+eval_cond_acc_equality <- function(data, outcome, group, probs, cutoff = 0.5, confint = TRUE,
                                    alpha = 0.05, bootstraps = 2500,
                                    digits = 2, message = TRUE) {
   # Check if outcome is binary
@@ -724,7 +725,7 @@ eval_cond_acc_equality <- function(data, outcome, group, probs, cutoff = 0.5,
 #' confidence interval for the ratio in accuracy
 #' @export
 
-eval_acc_parity <- function(data, outcome, group, probs, cutoff = 0.5,
+eval_acc_parity <- function(data, outcome, group, probs, cutoff = 0.5, confint = TRUE,
                             alpha = 0.05, bootstraps = 2500,
                             digits = 2, message = TRUE) {
   # Check if outcome is binary
@@ -816,7 +817,7 @@ eval_acc_parity <- function(data, outcome, group, probs, cutoff = 0.5,
 #' confidence interval for the ratio in Brier Score
 #' @export
 
-eval_bs_parity <- function(data, outcome, group, probs,
+eval_bs_parity <- function(data, outcome, group, probs, confint = TRUE,
                            alpha = 0.05, bootstraps = 2500,
                            digits = 2, message = TRUE) {
   # Check if outcome is binary
@@ -910,7 +911,7 @@ eval_bs_parity <- function(data, outcome, group, probs,
 #' confidence interval for the ratio in False Negative / False Positive ratio
 #' @export
 
-eval_treatment_equality <- function(data, outcome, group, probs, cutoff = 0.5,
+eval_treatment_equality <- function(data, outcome, group, probs, cutoff = 0.5, confint = TRUE,
                                     alpha = 0.05, bootstraps = 2500,
                                     digits = 2, message = TRUE) {
   # Check if outcome is binary
@@ -1005,7 +1006,7 @@ eval_treatment_equality <- function(data, outcome, group, probs, cutoff = 0.5,
 #' confidence interval for the ratio in average predicted probability
 #' @export
 
-eval_pos_class_bal <- function(data, outcome, group, probs,
+eval_pos_class_bal <- function(data, outcome, group, probs, confint = TRUE,
                                alpha = 0.05, bootstraps = 2500,
                                digits = 2, message = TRUE) {
   # Check if outcome is binary
@@ -1099,7 +1100,7 @@ eval_pos_class_bal <- function(data, outcome, group, probs,
 #' confidence interval for the ratio in average predicted probability
 #' @export
 
-eval_neg_class_bal <- function(data, outcome, group, probs,
+eval_neg_class_bal <- function(data, outcome, group, probs, confint = TRUE,
                                alpha = 0.05, bootstraps = 2500,
                                digits = 2, message = TRUE) {
   # Check if outcome is binary
