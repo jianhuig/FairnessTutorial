@@ -302,7 +302,7 @@ eval_stats_parity <- function(data, outcome, group, probs, cutoff = 0.5, confint
     Difference = ppr_diff,
     CI = paste0("[", lower_ci, ", ", upper_ci, "]"),
     Ratio = ppr_ratio,
-    Ratio_CI = paste0("[", lower_ratio_ci, ", ", upper_ratio_ci, "]"),
+    Ratio_CI = paste0("[", lower_ratio_ci, ", ", upper_ratio_ci, "]")
   )
 
   colnames(results_df) <- c(
