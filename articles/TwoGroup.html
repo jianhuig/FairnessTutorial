@@ -224,30 +224,24 @@ outcome.</p>
 <span>  probs <span class="op">=</span> <span class="st">"pred"</span>,</span>
 <span>  cutoff <span class="op">=</span> <span class="va">cut_off</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1]    2 2500</span></span>
 <span><span class="co">#&gt; There is evidence that model does not satisfy equal opportunity.</span></span>
 <span><span class="co">#&gt;   Metric GroupFemale GroupMale Difference    95% Diff CI    Ratio 95% Ratio CI</span></span>
 <span><span class="co">#&gt; 1    FNR        0.38      0.62      -0.24 [-0.39, -0.09] 1.631579 [1.16, 2.29]</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="equalized-odds">Equalized Odds<a class="anchor" aria-label="anchor" href="#equalized-odds"></a>
-</h3>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/eval_eq_odds.html">eval_eq_odds</a></span><span class="op">(</span></span>
-<span>  dat <span class="op">=</span> <span class="va">test_data</span>,</span>
-<span>  outcome <span class="op">=</span> <span class="st">"day_28_flg"</span>,</span>
-<span>  group <span class="op">=</span> <span class="st">"gender"</span>,</span>
-<span>  probs <span class="op">=</span> <span class="st">"pred"</span>,</span>
-<span>  cutoff <span class="op">=</span> <span class="va">cut_off</span></span>
-<span><span class="op">)</span></span>
-<span><span class="co">#&gt; There is evidence that model does not satisfy equalized odds.</span></span>
-<span><span class="co">#&gt;     Metric Group Female Group Male  Difference                       95% CR</span></span>
-<span><span class="co">#&gt; 1 FNR; FPR   0.38; 0.08 0.62; 0.03 -0.24; 0.05 [-0.41, -0.07]; [0.01, 0.09]</span></span></code></pre></div>
+<!-- ## Equalized Odds -->
+<!-- ```{r} -->
+<!-- eval_eq_odds( -->
+<!--   dat = test_data, -->
+<!--   outcome = "day_28_flg", -->
+<!--   group = "gender", -->
+<!--   probs = "pred", -->
+<!--   cutoff = cut_off -->
+<!-- ) -->
+<!-- ``` -->
 </div>
 <div class="section level3">
 <h3 id="statistical-parity">Statistical Parity<a class="anchor" aria-label="anchor" href="#statistical-parity"></a>
 </h3>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/eval_stats_parity.html">eval_stats_parity</a></span><span class="op">(</span></span>
 <span>  dat <span class="op">=</span> <span class="va">test_data</span>,</span>
 <span>  outcome <span class="op">=</span> <span class="st">"day_28_flg"</span>,</span>
@@ -263,7 +257,7 @@ outcome.</p>
 <h3 id="conditional-statistical-parity">Conditional Statistical Parity<a class="anchor" aria-label="anchor" href="#conditional-statistical-parity"></a>
 </h3>
 <p>We conditional on age &gt;= 60.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/eval_cond_stats_parity.html">eval_cond_stats_parity</a></span><span class="op">(</span>dat <span class="op">=</span> <span class="va">test_data</span>,</span>
 <span>  outcome <span class="op">=</span> <span class="st">"day_28_flg"</span>,</span>
 <span>  group <span class="op">=</span> <span class="st">"gender"</span>,</span>
@@ -276,7 +270,7 @@ outcome.</p>
 <span><span class="co">#&gt; 1    PPR         0.34       0.21       0.13 [0.05, 0.21] 0.6176471 [0.45, 0.85]</span></span></code></pre></div>
 <p>We can also condition on a categorical variable. For example, we can
 condition on the service unit = MICU.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/eval_cond_stats_parity.html">eval_cond_stats_parity</a></span><span class="op">(</span>dat <span class="op">=</span> <span class="va">test_data</span>,</span>
 <span>  outcome <span class="op">=</span> <span class="st">"day_28_flg"</span>,</span>
 <span>  group <span class="op">=</span> <span class="st">"gender"</span>,</span>
@@ -289,12 +283,12 @@ condition on the service unit = MICU.</p>
 <span><span class="co">#&gt;   Metric Group Female Group Male Difference   95% Diff CI     Ratio</span></span>
 <span><span class="co">#&gt; 1    PPR         0.15        0.1       0.05 [-0.01, 0.11] 0.6666667</span></span>
 <span><span class="co">#&gt;   95% Ratio CI</span></span>
-<span><span class="co">#&gt; 1 [0.39, 1.14]</span></span></code></pre></div>
+<span><span class="co">#&gt; 1 [0.38, 1.16]</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="predictive-parity">Predictive Parity<a class="anchor" aria-label="anchor" href="#predictive-parity"></a>
 </h3>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/eval_pred_parity.html">eval_pred_parity</a></span><span class="op">(</span></span>
 <span>  dat <span class="op">=</span> <span class="va">test_data</span>,</span>
 <span>  outcome <span class="op">=</span> <span class="st">"day_28_flg"</span>,</span>
@@ -310,7 +304,7 @@ condition on the service unit = MICU.</p>
 <div class="section level3">
 <h3 id="predictive-equality">Predictive Equality<a class="anchor" aria-label="anchor" href="#predictive-equality"></a>
 </h3>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/eval_pred_equality.html">eval_pred_equality</a></span><span class="op">(</span></span>
 <span>  dat <span class="op">=</span> <span class="va">test_data</span>,</span>
 <span>  outcome <span class="op">=</span> <span class="st">"day_28_flg"</span>,</span>
@@ -322,27 +316,21 @@ condition on the service unit = MICU.</p>
 <span><span class="co">#&gt;             equality.</span></span>
 <span><span class="co">#&gt;   Metric GroupFemale GroupMale Difference  95% Diff CI Ratio 95% Ratio CI</span></span>
 <span><span class="co">#&gt; 1    FPR        0.08      0.03       0.05 [0.02, 0.08] 0.375  [0.2, 0.72]</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="conditional-accuracy-equality">Conditional Accuracy Equality<a class="anchor" aria-label="anchor" href="#conditional-accuracy-equality"></a>
-</h3>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/eval_cond_acc_equality.html">eval_cond_acc_equality</a></span><span class="op">(</span></span>
-<span>  dat <span class="op">=</span> <span class="va">test_data</span>,</span>
-<span>  outcome <span class="op">=</span> <span class="st">"day_28_flg"</span>,</span>
-<span>  group <span class="op">=</span> <span class="st">"gender"</span>,</span>
-<span>  probs <span class="op">=</span> <span class="st">"pred"</span>,</span>
-<span>  cutoff <span class="op">=</span> <span class="va">cut_off</span></span>
-<span><span class="op">)</span></span>
-<span><span class="co">#&gt; There is not enough evidence that the model does not satisfy</span></span>
-<span><span class="co">#&gt;             conditional use accuracy equality.</span></span>
-<span><span class="co">#&gt;     Metric GroupFemale GroupMale  Difference                       95% CI</span></span>
-<span><span class="co">#&gt; 1 PPV; NPV  0.62; 0.92 0.66; 0.9 -0.04; 0.02 [-0.23, 0.15]; [-0.02, 0.06]</span></span></code></pre></div>
+<!-- ## Conditional Accuracy Equality -->
+<!-- ```{r} -->
+<!-- eval_cond_acc_equality( -->
+<!--   dat = test_data, -->
+<!--   outcome = "day_28_flg", -->
+<!--   group = "gender", -->
+<!--   probs = "pred", -->
+<!--   cutoff = cut_off -->
+<!-- ) -->
+<!-- ``` -->
 </div>
 <div class="section level3">
 <h3 id="accuracy-parity">Accuracy Parity<a class="anchor" aria-label="anchor" href="#accuracy-parity"></a>
 </h3>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/eval_acc_parity.html">eval_acc_parity</a></span><span class="op">(</span></span>
 <span>  dat <span class="op">=</span> <span class="va">test_data</span>,</span>
 <span>  outcome <span class="op">=</span> <span class="st">"day_28_flg"</span>,</span>
@@ -358,7 +346,7 @@ condition on the service unit = MICU.</p>
 <div class="section level3">
 <h3 id="brier-score-parity">Brier Score Parity<a class="anchor" aria-label="anchor" href="#brier-score-parity"></a>
 </h3>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/eval_bs_parity.html">eval_bs_parity</a></span><span class="op">(</span></span>
 <span>  dat <span class="op">=</span> <span class="va">test_data</span>,</span>
 <span>  outcome <span class="op">=</span> <span class="st">"day_28_flg"</span>,</span>
@@ -375,18 +363,24 @@ condition on the service unit = MICU.</p>
 <div class="section level3">
 <h3 id="treatment-equality">Treatment Equality<a class="anchor" aria-label="anchor" href="#treatment-equality"></a>
 </h3>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># eval_treatment_equality(</span></span>
-<span><span class="co">#   dat = test_data,</span></span>
-<span><span class="co">#   outcome = "day_28_flg",</span></span>
-<span><span class="co">#   group = "gender",</span></span>
-<span><span class="co">#   probs = "pred"</span></span>
-<span><span class="co"># )</span></span></code></pre></div>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/eval_treatment_equality.html">eval_treatment_equality</a></span><span class="op">(</span></span>
+<span>  dat <span class="op">=</span> <span class="va">test_data</span>,</span>
+<span>  outcome <span class="op">=</span> <span class="st">"day_28_flg"</span>,</span>
+<span>  group <span class="op">=</span> <span class="st">"gender"</span>,</span>
+<span>  probs <span class="op">=</span> <span class="st">"pred"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="co">#&gt; There is not enough evidence that the model does not satisfy</span></span>
+<span><span class="co">#&gt;             treatment equality.</span></span>
+<span><span class="co">#&gt;        Metric GroupFemale GroupMale Difference     95% Diff CI    Ratio</span></span>
+<span><span class="co">#&gt; 1 FN/FP Ratio        5.11      13.6      -8.49 [-32.96, 15.98] 2.661448</span></span>
+<span><span class="co">#&gt;   95% Ratio CI</span></span>
+<span><span class="co">#&gt; 1 [0.74, 9.53]</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="balance-for-positive-class">Balance for Positive Class<a class="anchor" aria-label="anchor" href="#balance-for-positive-class"></a>
 </h3>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/eval_pos_class_bal.html">eval_pos_class_bal</a></span><span class="op">(</span></span>
 <span>  dat <span class="op">=</span> <span class="va">test_data</span>,</span>
 <span>  outcome <span class="op">=</span> <span class="st">"day_28_flg"</span>,</span>
@@ -398,12 +392,12 @@ condition on the service unit = MICU.</p>
 <span><span class="co">#&gt;                 Metric GroupFemale GroupMale Difference  95% Diff CI     Ratio</span></span>
 <span><span class="co">#&gt; 1 Avg. Predicted Prob.        0.46      0.37       0.09 [0.04, 0.14] 0.8043478</span></span>
 <span><span class="co">#&gt;   95% Ratio CI</span></span>
-<span><span class="co">#&gt; 1  [0.7, 0.92]</span></span></code></pre></div>
+<span><span class="co">#&gt; 1 [0.71, 0.92]</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="balance-for-negative-class">Balance for Negative Class<a class="anchor" aria-label="anchor" href="#balance-for-negative-class"></a>
 </h3>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/eval_neg_class_bal.html">eval_neg_class_bal</a></span><span class="op">(</span></span>
 <span>  dat <span class="op">=</span> <span class="va">test_data</span>,</span>
 <span>  outcome <span class="op">=</span> <span class="st">"day_28_flg"</span>,</span>
