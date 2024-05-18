@@ -945,10 +945,10 @@ eval_treatment_equality <- function(data, outcome, group, probs, cutoff = 0.5, c
   se <- se[!is.infinite(se)]
   print(dim(se))
 
-  lower_ci <- round(err_ratio_diff - qnorm(1 - alpha/2)  * sd(se[[1,]], na.rm = TRUE), digits)
-  upper_ci <- round(err_ratio_diff + qnorm(1 - alpha/2)  * sd(se[[1,]], na.rm = TRUE), digits)
-  lower_ratio_ci <- round(exp(log(err_ratio_ratio) - qnorm(1 - alpha/2) * sd(se[[2,]], na.rm = TRUE)), digits)
-  upper_ratio_ci <- round(exp(log(err_ratio_ratio) + qnorm(1 - alpha/2) * sd(se[[2,]], na.rm = TRUE)), digits)
+  lower_ci <- round(err_ratio_diff - qnorm(1 - alpha/2)  * sd(se[1,], na.rm = TRUE), digits)
+  upper_ci <- round(err_ratio_diff + qnorm(1 - alpha/2)  * sd(se[1,], na.rm = TRUE), digits)
+  lower_ratio_ci <- round(exp(log(err_ratio_ratio) - qnorm(1 - alpha/2) * sd(se[2,], na.rm = TRUE)), digits)
+  upper_ratio_ci <- round(exp(log(err_ratio_ratio) + qnorm(1 - alpha/2) * sd(se[2,], na.rm = TRUE)), digits)
 
   result_df <- data.frame(
     "FN/FP Ratio",
