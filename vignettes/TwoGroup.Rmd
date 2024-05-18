@@ -228,12 +228,12 @@ eval_bs_parity(
 ## Treatment Equality
 
 ```{r}
-eval_treatment_equality(
-  dat = test_data,
-  outcome = "day_28_flg",
-  group = "gender",
-  probs = "pred"
-)
+# eval_treatment_equality(
+#   dat = test_data,
+#   outcome = "day_28_flg",
+#   group = "gender",
+#   probs = "pred"
+# )
 ```
 
 ## Balance for Positive Class
