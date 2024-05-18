@@ -942,8 +942,7 @@ eval_treatment_equality <- function(data, outcome, group, probs, cutoff = 0.5, c
     return(c(err_ratio_boot[[1]] - err_ratio_boot[[2]],
              log(err_ratio_boot[[2]] / err_ratio_boot[[1]])))
   })
-  se <- se[!is.infinite(se)]
-  print(dim(se))
+  se[!is.finite(se)] <- NA
 
   lower_ci <- round(err_ratio_diff - qnorm(1 - alpha/2)  * sd(se[1,], na.rm = TRUE), digits)
   upper_ci <- round(err_ratio_diff + qnorm(1 - alpha/2)  * sd(se[1,], na.rm = TRUE), digits)

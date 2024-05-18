@@ -115,17 +115,17 @@ eval_eq_opp(
 )
 ```
 
-## Equalized Odds
+<!-- ## Equalized Odds -->
 
-```{r}
-eval_eq_odds(
-  dat = test_data,
-  outcome = "day_28_flg",
-  group = "gender",
-  probs = "pred",
-  cutoff = cut_off
-)
-```
+<!-- ```{r} -->
+<!-- eval_eq_odds( -->
+<!--   dat = test_data, -->
+<!--   outcome = "day_28_flg", -->
+<!--   group = "gender", -->
+<!--   probs = "pred", -->
+<!--   cutoff = cut_off -->
+<!-- ) -->
+<!-- ``` -->
 
 ## Statistical Parity
 
@@ -190,17 +190,17 @@ eval_pred_equality(
 )
 ```
 
-## Conditional Accuracy Equality
+<!-- ## Conditional Accuracy Equality -->
 
-```{r}
-eval_cond_acc_equality(
-  dat = test_data,
-  outcome = "day_28_flg",
-  group = "gender",
-  probs = "pred",
-  cutoff = cut_off
-)
-```
+<!-- ```{r} -->
+<!-- eval_cond_acc_equality( -->
+<!--   dat = test_data, -->
+<!--   outcome = "day_28_flg", -->
+<!--   group = "gender", -->
+<!--   probs = "pred", -->
+<!--   cutoff = cut_off -->
+<!-- ) -->
+<!-- ``` -->
 
 ## Accuracy Parity
 
