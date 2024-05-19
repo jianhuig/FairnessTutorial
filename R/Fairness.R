@@ -55,7 +55,7 @@ eval_eq_opp <- function(data, outcome, group, probs, cutoff = 0.5,
   )
 
   fnr_diff <- fnr[[1]] - fnr[[2]]
-  fnr_ratio <- fnr[[2]] / fnr[[1]]
+  fnr_ratio <- fnr[1] / fnr[[2]]
 
   # Calculate difference confidence interval
   se <- replicate(bootstraps, {
@@ -72,7 +72,7 @@ eval_eq_opp <- function(data, outcome, group, probs, cutoff = 0.5,
       data = data_boot, outcome = outcome, group = group,
       probs = probs, cutoff = cutoff
     )
-    return(c(fnr_boot[[1]] - fnr_boot[[2]], log(fnr_boot[[2]]/fnr_boot[[1]])))
+    return(c(fnr_boot[[1]] - fnr_boot[[2]], log(fnr_boot[[1]]/fnr_boot[[2]])))
   })
 
   lower_ci <- round(fnr_diff - qnorm(1 - alpha/2) * sd(se[1,]), digits)
@@ -87,7 +87,7 @@ eval_eq_opp <- function(data, outcome, group, probs, cutoff = 0.5,
     fnr[[2]],
     fnr_diff,
     paste0("[", lower_ci, ", ", upper_ci, "]"),
-    fnr_ratio,
+    round(fnr_ratio, digits),
     paste0("[", lower_ratio_ci, ", ", upper_ratio_ci, "]")
   )
 
@@ -270,7 +270,7 @@ eval_stats_parity <- function(data, outcome, group, probs, cutoff = 0.5, confint
   )
 
   ppr_diff <- ppr[[1]] - ppr[[2]]
-  ppr_ratio <- ppr[[2]] / ppr[[1]]
+  ppr_ratio <- ppr[[1]] / ppr[[2]]
 
   # Calculate confidence interval
   se <- replicate(bootstraps, {
@@ -285,7 +285,7 @@ eval_stats_parity <- function(data, outcome, group, probs, cutoff = 0.5, confint
       data = boot_data, outcome = outcome, group = group, probs = probs,
       cutoff = cutoff, digits = digits
     )
-    return(c(ppr[[1]] - ppr[[2]], log(ppr[[2]] / ppr[[1]])))
+    return(c(ppr[[1]] - ppr[[2]], log(ppr[[1]] / ppr[[2]])))
   })
 
   lower_ci <- round(ppr_diff - qnorm(1 - alpha/2) * sd(unlist(se[1,])), digits)
@@ -300,7 +300,7 @@ eval_stats_parity <- function(data, outcome, group, probs, cutoff = 0.5, confint
     Group2 = ppr[[2]],
     Difference = ppr_diff,
     CI = paste0("[", lower_ci, ", ", upper_ci, "]"),
-    Ratio = ppr_ratio,
+    Ratio = round(ppr_ratio, digits),
     Ratio_CI = paste0("[", lower_ratio_ci, ", ", upper_ratio_ci, "]")
   )
 
@@ -444,7 +444,7 @@ eval_pred_parity <- function(data, outcome, group, probs, cutoff = 0.5, confint 
     cutoff = cutoff, digits = digits
   )
   ppv_dif <- ppv[[1]] - ppv[[2]]
-  ppv_ratio <- ppv[[2]] / ppv[[1]]
+  ppv_ratio <- ppv[[1]] / ppv[[2]]
 
   se <- replicate(bootstraps, {
     group1 <- sample(which(data[[group]] == sort(unique(data[[group]]))[1]),
@@ -458,7 +458,7 @@ eval_pred_parity <- function(data, outcome, group, probs, cutoff = 0.5, confint 
       data = data_boot, outcome = outcome, group = group, probs = probs,
       cutoff = cutoff, digits = digits
     )
-    return(c(ppv_boot[[1]] - ppv_boot[[2]], log(ppv_boot[[2]] / ppv_boot[[1]])))
+    return(c(ppv_boot[[1]] - ppv_boot[[2]], log(ppv_boot[[1]] / ppv_boot[[2]])))
   })
 
   lower_ci <- round(ppv_dif - qnorm(1 - alpha/2) * sd(se[1,]), digits)
@@ -472,7 +472,7 @@ eval_pred_parity <- function(data, outcome, group, probs, cutoff = 0.5, confint 
     ppv[[2]],
     ppv_dif,
     paste0("[", lower_ci, ", ", upper_ci, "]"),
-    ppv_ratio,
+    round(ppv_ratio, digits),
     paste0("[", lower_ratio_ci, ", ", upper_ratio_ci, "]")
   )
   colnames(result_df) <- c(
@@ -536,7 +536,7 @@ eval_pred_equality <- function(data, outcome, group, probs, cutoff = 0.5, confin
   )
 
   fpr_dif <- fpr[[1]] - fpr[[2]]
-  fpr_ratio <- fpr[[2]] / fpr[[1]]
+  fpr_ratio <- fpr[[1]] / fpr[[2]]
 
   se <- replicate(bootstraps, {
     group1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
@@ -550,7 +550,7 @@ eval_pred_equality <- function(data, outcome, group, probs, cutoff = 0.5, confin
       data = data_boot, outcome = outcome, group = group, probs = probs,
       cutoff = cutoff
     )
-    return(c(fpr_boot[[1]] - fpr_boot[[2]], log(fpr_boot[[2]] / fpr_boot[[1]])))
+    return(c(fpr_boot[[1]] - fpr_boot[[2]], log(fpr_boot[[1]] / fpr_boot[[2]])))
   })
 
   lower_ci <- round(fpr_dif - qnorm(1 - alpha/2) * sd(se[1,]), digits)
@@ -564,7 +564,7 @@ eval_pred_equality <- function(data, outcome, group, probs, cutoff = 0.5, confin
     fpr[[2]],
     fpr_dif,
     paste0("[", lower_ci, ", ", upper_ci, "]"),
-    fpr_ratio,
+    round(fpr_ratio, digits),
     paste0("[", lower_ratio_ci, ", ", upper_ratio_ci, "]")
   )
   colnames(result_df) <- c(
@@ -739,7 +739,7 @@ eval_acc_parity <- function(data, outcome, group, probs, cutoff = 0.5, confint =
   )
 
   acc_diff <- acc[[1]] - acc[[2]]
-  acc_ratio <- acc[[2]] / acc[[1]]
+  acc_ratio <- acc[[1]] / acc[[2]]
 
   se <- replicate(bootstraps, {
     group1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
@@ -753,7 +753,7 @@ eval_acc_parity <- function(data, outcome, group, probs, cutoff = 0.5, confint =
       data = data_boot, outcome = outcome, group = group, probs = probs,
       digits = digits, cutoff = cutoff
     )
-    return(c(acc_boot[[1]] - acc_boot[[2]], log(acc_boot[[2]] / acc_boot[[1]])))
+    return(c(acc_boot[[1]] - acc_boot[[2]], log(acc_boot[[1]] / acc_boot[[2]])))
   })
 
   lower_ci <- round(acc_diff - qnorm(1 - alpha/2)  * sd(se[1,]), digits)
@@ -767,7 +767,7 @@ eval_acc_parity <- function(data, outcome, group, probs, cutoff = 0.5, confint =
     acc[[2]],
     acc_diff,
     paste0("[", lower_ci, ", ", upper_ci, "]"),
-    acc_ratio,
+    round(acc_ratio, digits),
     paste0("[", lower_ratio_ci, ", ", upper_ratio_ci, "]")
   )
 
@@ -831,7 +831,7 @@ eval_bs_parity <- function(data, outcome, group, probs, confint = TRUE,
   )
 
   bs_diff <- bs[[1]] - bs[[2]]
-  bs_ratio <- bs[[2]] / bs[[1]]
+  bs_ratio <- bs[[1]] / bs[[2]]
 
   se <- replicate(bootstraps, {
     group1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
@@ -845,7 +845,7 @@ eval_bs_parity <- function(data, outcome, group, probs, confint = TRUE,
       data = data_boot, outcome = outcome, group = group, probs = probs,
       digits = digits
     )
-    return(c(bs_boot[[1]] - bs_boot[[2]], log(bs_boot[[2]] / bs_boot[[1]])))
+    return(c(bs_boot[[1]] - bs_boot[[2]], log(bs_boot[[1]] / bs_boot[[2]])))
   })
 
   lower_ci <- round(bs_diff - qnorm(1 - alpha/2) * sd(se[1,]), digits)
@@ -859,7 +859,7 @@ eval_bs_parity <- function(data, outcome, group, probs, confint = TRUE,
     bs[[2]],
     bs_diff,
     paste0("[", lower_ci, ", ", upper_ci, "]"),
-    bs_ratio,
+    round(bs_ratio, digits),
     paste0("[", lower_ratio_ci, ", ", upper_ratio_ci, "]")
   )
 
@@ -925,7 +925,7 @@ eval_treatment_equality <- function(data, outcome, group, probs, cutoff = 0.5, c
   )
 
   err_ratio_diff <- err_ratio[[1]] - err_ratio[[2]]
-  err_ratio_ratio <- err_ratio[[2]] / err_ratio[[1]]
+  err_ratio_ratio <- err_ratio[[1]] / err_ratio[[2]]
 
   se <- replicate(bootstraps, {
     group1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
@@ -940,7 +940,7 @@ eval_treatment_equality <- function(data, outcome, group, probs, cutoff = 0.5, c
       cutoff = cutoff, digits = digits
     )
     return(c(err_ratio_boot[[1]] - err_ratio_boot[[2]],
-             log(err_ratio_boot[[2]] / err_ratio_boot[[1]])))
+             log(err_ratio_boot[[1]] / err_ratio_boot[[2]])))
   })
   se[!is.finite(se)] <- NA
 
@@ -955,7 +955,7 @@ eval_treatment_equality <- function(data, outcome, group, probs, cutoff = 0.5, c
     err_ratio[[2]],
     err_ratio_diff,
     paste0("[", lower_ci, ", ", upper_ci, "]"),
-    err_ratio_ratio,
+    round(err_ratio_ratio, digits),
     paste0("[", lower_ratio_ci, ", ", upper_ratio_ci, "]")
   )
 
@@ -1020,7 +1020,7 @@ eval_pos_class_bal <- function(data, outcome, group, probs, confint = TRUE,
   )
 
   avg_prob_diff <- avg_prob[[1]] - avg_prob[[2]]
-  avg_prob_ratio <- avg_prob[[2]] / avg_prob[[1]]
+  avg_prob_ratio <- avg_prob[[1]] / avg_prob[[2]]
 
   se <- replicate(bootstraps, {
     group1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
@@ -1035,7 +1035,7 @@ eval_pos_class_bal <- function(data, outcome, group, probs, confint = TRUE,
       data = pos_data_boot, group = group, probs = probs
     )
     return(c(avg_prob_boot[[1]] - avg_prob_boot[[2]],
-             log(avg_prob_boot[[2]] / avg_prob_boot[[1]])))
+             log(avg_prob_boot[[1]] / avg_prob_boot[[2]])))
   })
 
   lower_ci <- round(avg_prob_diff - qnorm(1 - alpha/2)  * sd(se[1,], na.rm = TRUE), digits)
@@ -1049,7 +1049,7 @@ eval_pos_class_bal <- function(data, outcome, group, probs, confint = TRUE,
     avg_prob[[2]],
     avg_prob_diff,
     paste0("[", lower_ci, ", ", upper_ci, "]"),
-    avg_prob_ratio,
+    round(avg_prob_ratio, digits),
     paste0("[", lower_ratio_ci, ", ", upper_ratio_ci, "]")
   )
 
@@ -1114,7 +1114,7 @@ eval_neg_class_bal <- function(data, outcome, group, probs, confint = TRUE,
   )
 
   avg_prob_diff <- avg_prob[[1]] - avg_prob[[2]]
-  avg_prob_ratio <- avg_prob[[2]] / avg_prob[[1]]
+  avg_prob_ratio <- avg_prob[[1]] / avg_prob[[2]]
 
   se <- replicate(bootstraps, {
     group1 <- sample(which(data[[group]] == unique(data[[group]])[1]),
@@ -1129,7 +1129,7 @@ eval_neg_class_bal <- function(data, outcome, group, probs, confint = TRUE,
       data = neg_data_boot, group = group, probs = probs
     )
     return(c(avg_prob_boot[[1]] - avg_prob_boot[[2]],
-             log(avg_prob_boot[[2]] / avg_prob_boot[[1]])))
+             log(avg_prob_boot[[1]] / avg_prob_boot[[2]])))
   })
 
   lower_ci <- round(avg_prob_diff - qnorm(1 - alpha/2)  * sd(se[1,], na.rm = TRUE), digits)
@@ -1143,7 +1143,7 @@ eval_neg_class_bal <- function(data, outcome, group, probs, confint = TRUE,
     avg_prob[[2]],
     avg_prob_diff,
     paste0("[", lower_ci, ", ", upper_ci, "]"),
-    avg_prob_ratio,
+    round(avg_prob_ratio, digits),
     paste0("[", lower_ratio_ci, ", ", upper_ratio_ci, "]")
   )
 
