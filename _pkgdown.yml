@@ -12,11 +12,7 @@ navbar:
       href: index.html
     casestudy:
       text: "Real Data Example"
-      menu:
-      - text: "Binary Protected Attributes"
-        href: articles/TwoGroup.html
-      - text: "Categorical Protected Attributes"
-        href: articles/MultiGroup.html
+      href: articles/TwoGroup.html
 
 
 
