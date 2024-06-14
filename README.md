@@ -3,8 +3,8 @@
 R package and reproducible real-world data examples for \textbf{A tutorial on fairness in machine learning in healthcare}.
 
 
-[Link](https://jianhuig.github.io/FairnessTutorial/) to online tutorial.
-[Link](https://arxiv.org/abs/2406.09307) to preprint.
+- [Link](https://jianhuig.github.io/FairnessTutorial/) to online tutorial.
+- [Link](https://arxiv.org/abs/2406.09307) to preprint.
 
 ## Installation
 
