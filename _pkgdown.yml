@@ -1,18 +1,4 @@
-url: https://jianhuig.github.io/FairnessTutorial/
+url: ~
 template:
   bootstrap: 5
-
-navbar:
-  structure:
-    left: ["intro", "casestudy", "reference"]
-    right: ["search"]
-  components:
-    intro:
-      text: "Intro"
-      href: index.html
-    casestudy:
-      text: "Real Data Example"
-      href: articles/TwoGroup.html
-
-
 
