@@ -1,4 +1,4 @@
-# A tutorial on fairness of machine learning in healthcare
+# A tutorial on fairness in machine learning in healthcare
 
 R package and reproducible real-world data examples for *A tutorial on fairness in machine learning in healthcare*.
 
