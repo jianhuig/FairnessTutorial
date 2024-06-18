@@ -1,84 +1,84 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://jianhuig.github.io/FairnessTutorial/404.html</loc>
+    <loc>/404.html</loc>
   </url>
   <url>
-    <loc>https://jianhuig.github.io/FairnessTutorial/LICENSE-text.html</loc>
+    <loc>/LICENSE-text.html</loc>
   </url>
   <url>
-    <loc>https://jianhuig.github.io/FairnessTutorial/articles/TwoGroup.html</loc>
+    <loc>/articles/TwoGroup.html</loc>
   </url>
   <url>
-    <loc>https://jianhuig.github.io/FairnessTutorial/articles/index.html</loc>
+    <loc>/articles/index.html</loc>
   </url>
   <url>
-    <loc>https://jianhuig.github.io/FairnessTutorial/authors.html</loc>
+    <loc>/authors.html</loc>
   </url>
   <url>
-    <loc>https://jianhuig.github.io/FairnessTutorial/index.html</loc>
+    <loc>/index.html</loc>
   </url>
   <url>
-    <loc>https://jianhuig.github.io/FairnessTutorial/reference/eval_acc_parity.html</loc>
+    <loc>/reference/eval_acc_parity.html</loc>
   </url>
   <url>
-    <loc>https://jianhuig.github.io/FairnessTutorial/reference/eval_bs_parity.html</loc>
+    <loc>/reference/eval_bs_parity.html</loc>
   </url>
   <url>
-    <loc>https://jianhuig.github.io/FairnessTutorial/reference/eval_cond_acc_equality.html</loc>
+    <loc>/reference/eval_cond_acc_equality.html</loc>
   </url>
   <url>
-    <loc>https://jianhuig.github.io/FairnessTutorial/reference/eval_cond_stats_parity.html</loc>
+    <loc>/reference/eval_cond_stats_parity.html</loc>
   </url>
   <url>
-    <loc>https://jianhuig.github.io/FairnessTutorial/reference/eval_eq_odds.html</loc>
+    <loc>/reference/eval_eq_odds.html</loc>
   </url>
   <url>
-    <loc>https://jianhuig.github.io/FairnessTutorial/reference/eval_eq_opp.html</loc>
+    <loc>/reference/eval_eq_opp.html</loc>
   </url>
   <url>
-    <loc>https://jianhuig.github.io/FairnessTutorial/reference/eval_generalized_entropy_index.html</loc>
+    <loc>/reference/eval_generalized_entropy_index.html</loc>
   </url>
   <url>
-    <loc>https://jianhuig.github.io/FairnessTutorial/reference/eval_max_abs_diff.html</loc>
+    <loc>/reference/eval_max_abs_diff.html</loc>
   </url>
   <url>
-    <loc>https://jianhuig.github.io/FairnessTutorial/reference/eval_max_min_diff.html</loc>
+    <loc>/reference/eval_max_min_diff.html</loc>
   </url>
   <url>
-    <loc>https://jianhuig.github.io/FairnessTutorial/reference/eval_max_min_ratio.html</loc>
+    <loc>/reference/eval_max_min_ratio.html</loc>
   </url>
   <url>
-    <loc>https://jianhuig.github.io/FairnessTutorial/reference/eval_mean_abs_dev.html</loc>
+    <loc>/reference/eval_mean_abs_dev.html</loc>
   </url>
   <url>
-    <loc>https://jianhuig.github.io/FairnessTutorial/reference/eval_neg_class_bal.html</loc>
+    <loc>/reference/eval_neg_class_bal.html</loc>
   </url>
   <url>
-    <loc>https://jianhuig.github.io/FairnessTutorial/reference/eval_pos_class_bal.html</loc>
+    <loc>/reference/eval_pos_class_bal.html</loc>
   </url>
   <url>
-    <loc>https://jianhuig.github.io/FairnessTutorial/reference/eval_pred_equality.html</loc>
+    <loc>/reference/eval_pred_equality.html</loc>
   </url>
   <url>
-    <loc>https://jianhuig.github.io/FairnessTutorial/reference/eval_pred_parity.html</loc>
+    <loc>/reference/eval_pred_parity.html</loc>
   </url>
   <url>
-    <loc>https://jianhuig.github.io/FairnessTutorial/reference/eval_stats_parity.html</loc>
+    <loc>/reference/eval_stats_parity.html</loc>
   </url>
   <url>
-    <loc>https://jianhuig.github.io/FairnessTutorial/reference/eval_treatment_equality.html</loc>
+    <loc>/reference/eval_treatment_equality.html</loc>
   </url>
   <url>
-    <loc>https://jianhuig.github.io/FairnessTutorial/reference/eval_variance.html</loc>
+    <loc>/reference/eval_variance.html</loc>
   </url>
   <url>
-    <loc>https://jianhuig.github.io/FairnessTutorial/reference/get_all_metrics.html</loc>
+    <loc>/reference/get_all_metrics.html</loc>
   </url>
   <url>
-    <loc>https://jianhuig.github.io/FairnessTutorial/reference/index.html</loc>
+    <loc>/reference/index.html</loc>
   </url>
   <url>
-    <loc>https://jianhuig.github.io/FairnessTutorial/reference/mimic.html</loc>
+    <loc>/reference/mimic.html</loc>
   </url>
 </urlset>
