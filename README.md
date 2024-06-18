@@ -1,6 +1,6 @@
 # A tutorial on fairness of machine learning in healthcare
 
-R package and reproducible real-world data examples for \textbf{A tutorial on fairness in machine learning in healthcare}.
+R package and reproducible real-world data examples for *A tutorial on fairness in machine learning in healthcare*.
 
 
 - [Link](https://jianhuig.github.io/FairnessTutorial/) to online tutorial.
